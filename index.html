@@ -702,7 +702,7 @@
     // FUNCIONES DE AUTENTICACIÓN
     // ============================================
     async function signUp(email, password, userData) {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await supabaseClient.auth.signUp({
             email,
             password,
             options: { data: userData }
@@ -718,18 +718,18 @@
     }
 
     async function signOut() {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabaseClient.auth.signOut();
         if (error) throw error;
     }
 
     async function getSession() {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
         if (error) throw error;
         return data.session;
     }
 
     async function getCurrentUser() {
-        const { data, error } = await supabase.auth.getUser();
+        const { data, error } = await supabaseClient.auth.getUser();
         if (error) throw error;
         return data.user;
     }
@@ -738,7 +738,7 @@
     // FUNCIONES DE USUARIOS
     // ============================================
     async function getUsuario(userId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('usuarios')
             .select('*')
             .eq('id', userId)
@@ -748,7 +748,7 @@
     }
 
     async function updateUsuario(userId, updates) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('usuarios')
             .update({ 
                 ...updates, 
@@ -762,7 +762,7 @@
     }
 
     async function getUsuarioByEmail(email) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('usuarios')
             .select('id, email, nombre, apellido, username, edad, sexo, avatar_url')
             .eq('email', email)
@@ -775,7 +775,7 @@
     // FUNCIONES DE GRUPOS
     // ============================================
     async function getGrupos() {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('grupos')
             .select('*')
             .order('creado_en', { ascending: false });
@@ -784,7 +784,7 @@
     }
 
     async function getGrupoById(grupoId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('grupos')
             .select('*')
             .eq('id', grupoId)
@@ -794,7 +794,7 @@
     }
 
     async function createGrupo(nombre, creadorId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('grupos')
             .insert([{ nombre: nombre.trim(), creado_por: creadorId }])
             .select()
@@ -804,7 +804,7 @@
     }
 
     async function deleteGrupo(grupoId) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('grupos')
             .delete()
             .eq('id', grupoId);
@@ -815,7 +815,7 @@
     // FUNCIONES DE MIEMBROS
     // ============================================
     async function getMiembros(grupoId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('miembros_grupo')
             .select(`
                 *,
@@ -827,7 +827,7 @@
     }
 
     async function addMiembro(grupoId, usuarioId, rol = 'miembro') {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('miembros_grupo')
             .insert([{ grupo_id: grupoId, usuario_id: usuarioId, rol: rol }])
             .select()
@@ -837,7 +837,7 @@
     }
 
     async function removeMiembro(grupoId, usuarioId) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('miembros_grupo')
             .delete()
             .eq('grupo_id', grupoId)
@@ -846,7 +846,7 @@
     }
 
     async function isMiembro(grupoId, usuarioId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('miembros_grupo')
             .select('id')
             .eq('grupo_id', grupoId)
@@ -857,7 +857,7 @@
     }
 
     async function countMiembros(grupoId) {
-        const { count, error } = await supabase
+        const { count, error } = await supabaseClient
             .from('miembros_grupo')
             .select('*', { count: 'exact', head: true })
             .eq('grupo_id', grupoId);
@@ -869,7 +869,7 @@
     // FUNCIONES DE SESIONES
     // ============================================
     async function getSesionActiva(grupoId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('sesiones')
             .select('*')
             .eq('grupo_id', grupoId)
@@ -882,7 +882,7 @@
     }
 
     async function createSesion(grupoId, nombreTarea) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('sesiones')
             .insert([{ grupo_id: grupoId, nombre_tarea: nombreTarea, estado: 'votando' }])
             .select()
@@ -892,7 +892,7 @@
     }
 
     async function revealSesion(sesionId) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('sesiones')
             .update({ estado: 'revelado' })
             .eq('id', sesionId);
@@ -903,7 +903,7 @@
     // FUNCIONES DE VOTOS
     // ============================================
     async function getVotos(sesionId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('votos')
             .select('*')
             .eq('sesion_id', sesionId);
@@ -912,7 +912,7 @@
     }
 
     async function upsertVoto(sesionId, usuarioId, nombreUsuario, talla) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('votos')
             .upsert({
                 sesion_id: sesionId,
