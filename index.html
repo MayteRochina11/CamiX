@@ -959,6 +959,9 @@ async function cargarHistorial(grupoId) {
     } catch (error) {
         console.error('Error al cargar el historial:', error.message);
     }
+
+
+
 }
 
     async function isMiembro(grupoId, usuarioId) {
@@ -1225,16 +1228,39 @@ async function cargarHistorial(grupoId) {
     // DASHBOARD
     // ============================================
     async function showDashboard() {
-        if (!state.user) return;
-        showScreen('dashboard');
-
-        $('dashboard-user-email').textContent = state.user.email;
-        const displayName = state.userData?.username || state.userData?.nombre || 'Usuario';
-        $('dashboard-user-name').textContent = '@' + displayName;
-        updateAvatar('dashboard-avatar', state.userData?.avatar_url, displayName);
-
-        await loadGroups();
+    grupoActualId = null;
+    if (historialListener) {
+        historialListener.unsubscribe();
+        historialListener = null;
     }
+    showScreen('dashboard-screen');
+    await getGrupos();
+    
+    const tarjetasVotosContainer = document.getElementById('tarjetas-votos');
+    if (tarjetasVotosContainer) {
+        tarjetasVotosContainer.innerHTML = '';
+    }
+}
+
+async function enterGroup(grupoId) {
+    grupoActualId = grupoId;
+    showScreen('room-screen');
+
+    // Carga el historial de estimaciones de forma correcta
+    await cargarHistorial(grupoId);
+
+    // El listener en tiempo real continúa aquí dentro sin romperse
+    if (dbListener) dbListener.unsubscribe();
+
+    dbListener = supabaseClient
+        .channel('room-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'votos' }, payload => {
+            console.log('Cambio en votos detectado:', payload);
+            // Aquí continúa tu lógica interna de actualización de votos...
+        })
+        .subscribe();
+}
+    
 
     async function loadGroups() {
         try {
