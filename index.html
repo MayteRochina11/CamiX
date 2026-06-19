@@ -561,6 +561,19 @@
                 <div id="groups-list" class="space-y-2 max-h-80 overflow-y-auto">
                     <p class="text-slate-500 text-xs py-4 text-center">Cargando grupos...</p>
                 </div>
+                <div class="mt-6 pt-4 border-t border-slate-800/60">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                    📋 Historial de Estimaciones (Affinity)
+                </h3>
+            </div>
+            
+            <div id="lista-historial" class="space-y-2 max-h-60 overflow-y-auto">
+                <p class="text-slate-500 text-xs py-4 text-center">
+                    Aún no hay historias guardadas en este grupo.
+                </p>
+            </div>
+        </div>
             </div>
         </div>
 
@@ -815,7 +828,42 @@
             .eq('id', grupoId);
         if (error) throw error;
     }
+    async function cargarHistorial(grupoId) {
+    const contenedor = document.getElementById('lista-historial');
+    if (!contenedor) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('historias_estimadas')
+            .select('*')
+            .eq('grupo_id', grupoId)
+            .order('creado_al', { ascending: false });
 
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            contenedor.innerHTML = `<p class="text-slate-500 text-xs py-4 text-center">Aún no hay historias guardadas en este grupo.</p>`;
+            return;
+        }
+
+        contenedor.innerHTML = '';
+        data.forEach(historia => {
+            const fecha = new Date(historia.creado_al).toLocaleDateString();
+            contenedor.innerHTML += `
+                <div class="flex justify-between items-center bg-slate-800/40 border border-slate-700/50 p-2.5 rounded-lg text-xs">
+                    <div class="truncate pr-2">
+                        <p class="text-slate-200 font-medium truncate">${historia.titulo_historia}</p>
+                        <span class="text-slate-500 text-[10px]">${fecha}</span>
+                    </div>
+                    <span class="bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 font-bold px-2 py-0.5 rounded uppercase">
+                        ${historia.talla_final}
+                    </span>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error('Error al cargar el historial:', error.message);
+    }
+}
     // ============================================
     // FUNCIONES DE MIEMBROS
     // ============================================
@@ -1681,8 +1729,9 @@ async function cargarHistorial(grupoId) {
     const btnRefresh = document.getElementById('btn-refresh-grupos');
     if (btnRefresh) {
         btnRefresh.addEventListener('click', async () => {
-            if (typeof cargarGrupos === 'function') {
-                await cargarGrupos();
+            // CAMBIADO A TU FUNCIÓN REAL: getGrupos
+            if (typeof getGrupos === 'function') {
+                await getGrupos();
             }
         });
     }
@@ -1693,9 +1742,10 @@ async function cargarHistorial(grupoId) {
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'miembros' }, async (payload) => {
             console.log('¡Sincronización en tiempo real activa: Nuevo miembro!', payload);
             
-            if (typeof cargarGrupos === 'function') {
-                await cargarGrupos(); 
-            }
+            // CAMBIADO A TU FUNCIÓN REAL: getGrupos
+            if (typeof getGrupos === 'function') {
+                await getGrupos(); 
+        }
     })
     .subscribe();
     // Mostrar la pantalla de auth
