@@ -9,17 +9,50 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================
-// FUNCIONES DE BASE DE DATOS
+// FUNCIONES DE AUTENTICACIÓN
 // ============================================
+async function signUp(email, password, userData) {
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: userData }
+    });
+    if (error) throw error;
+    return data;
+}
 
-// --- USUARIOS ---
+async function signIn(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
+}
+
+async function signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+}
+
+async function getSession() {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data.session;
+}
+
+async function getCurrentUser() {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data.user;
+}
+
+// ============================================
+// FUNCIONES DE USUARIOS
+// ============================================
 async function getUsuario(userId) {
     const { data, error } = await supabase
         .from('usuarios')
         .select('*')
         .eq('id', userId)
         .single();
-    
     if (error) throw error;
     return data;
 }
@@ -27,25 +60,32 @@ async function getUsuario(userId) {
 async function updateUsuario(userId, updates) {
     const { data, error } = await supabase
         .from('usuarios')
-        .update({
-            ...updates,
-            actualizado_en: new Date().toISOString()
-        })
+        .update({ ...updates, actualizado_en: new Date().toISOString() })
         .eq('id', userId)
         .select()
         .single();
-    
     if (error) throw error;
     return data;
 }
 
-// --- GRUPOS ---
+async function getUsuarioByEmail(email) {
+    const { data, error } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+    if (error) throw error;
+    return data;
+}
+
+// ============================================
+// FUNCIONES DE GRUPOS
+// ============================================
 async function getGrupos() {
     const { data, error } = await supabase
         .from('grupos')
         .select('*')
         .order('creado_en', { ascending: false });
-    
     if (error) throw error;
     return data;
 }
@@ -56,7 +96,6 @@ async function getGrupoById(grupoId) {
         .select('*')
         .eq('id', grupoId)
         .single();
-    
     if (error) throw error;
     return data;
 }
@@ -64,13 +103,9 @@ async function getGrupoById(grupoId) {
 async function createGrupo(nombre, creadorId) {
     const { data, error } = await supabase
         .from('grupos')
-        .insert([{ 
-            nombre: nombre.trim(),
-            creado_por: creadorId
-        }])
+        .insert([{ nombre: nombre.trim(), creado_por: creadorId }])
         .select()
         .single();
-    
     if (error) throw error;
     return data;
 }
@@ -82,7 +117,6 @@ async function updateGrupo(grupoId, nombre) {
         .eq('id', grupoId)
         .select()
         .single();
-    
     if (error) throw error;
     return data;
 }
@@ -92,20 +126,20 @@ async function deleteGrupo(grupoId) {
         .from('grupos')
         .delete()
         .eq('id', grupoId);
-    
     if (error) throw error;
 }
 
-// --- MIEMBROS ---
+// ============================================
+// FUNCIONES DE MIEMBROS
+// ============================================
 async function getMiembros(grupoId) {
     const { data, error } = await supabase
         .from('miembros_grupo')
         .select(`
             *,
-            usuario:usuarios(id, email, nombre, avatar_url)
+            usuario:usuarios(id, email, nombre, username, avatar_url)
         `)
         .eq('grupo_id', grupoId);
-    
     if (error) throw error;
     return data;
 }
@@ -113,14 +147,9 @@ async function getMiembros(grupoId) {
 async function addMiembro(grupoId, usuarioId, rol = 'miembro') {
     const { data, error } = await supabase
         .from('miembros_grupo')
-        .insert([{
-            grupo_id: grupoId,
-            usuario_id: usuarioId,
-            rol: rol
-        }])
+        .insert([{ grupo_id: grupoId, usuario_id: usuarioId, rol: rol }])
         .select()
         .single();
-    
     if (error) throw error;
     return data;
 }
@@ -131,7 +160,6 @@ async function removeMiembro(grupoId, usuarioId) {
         .delete()
         .eq('grupo_id', grupoId)
         .eq('usuario_id', usuarioId);
-    
     if (error) throw error;
 }
 
@@ -142,12 +170,22 @@ async function isMiembro(grupoId, usuarioId) {
         .eq('grupo_id', grupoId)
         .eq('usuario_id', usuarioId)
         .maybeSingle();
-    
     if (error) throw error;
     return !!data;
 }
 
-// --- SESIONES Y VOTOS (igual que antes) ---
+async function countMiembros(grupoId) {
+    const { count, error } = await supabase
+        .from('miembros_grupo')
+        .select('*', { count: 'exact', head: true })
+        .eq('grupo_id', grupoId);
+    if (error) throw error;
+    return count;
+}
+
+// ============================================
+// FUNCIONES DE SESIONES
+// ============================================
 async function getSesionActiva(grupoId) {
     const { data, error } = await supabase
         .from('sesiones')
@@ -157,7 +195,6 @@ async function getSesionActiva(grupoId) {
         .order('creada_en', { ascending: false })
         .limit(1)
         .maybeSingle();
-    
     if (error) throw error;
     return data;
 }
@@ -165,14 +202,9 @@ async function getSesionActiva(grupoId) {
 async function createSesion(grupoId, nombreTarea) {
     const { data, error } = await supabase
         .from('sesiones')
-        .insert([{
-            grupo_id: grupoId,
-            nombre_tarea: nombreTarea,
-            estado: 'votando'
-        }])
+        .insert([{ grupo_id: grupoId, nombre_tarea: nombreTarea, estado: 'votando' }])
         .select()
         .single();
-    
     if (error) throw error;
     return data;
 }
@@ -182,16 +214,17 @@ async function revealSesion(sesionId) {
         .from('sesiones')
         .update({ estado: 'revelado' })
         .eq('id', sesionId);
-    
     if (error) throw error;
 }
 
+// ============================================
+// FUNCIONES DE VOTOS
+// ============================================
 async function getVotos(sesionId) {
     const { data, error } = await supabase
         .from('votos')
         .select('*')
         .eq('sesion_id', sesionId);
-    
     if (error) throw error;
     return data;
 }
@@ -204,94 +237,49 @@ async function upsertVoto(sesionId, usuarioId, nombreUsuario, talla) {
             usuario_id: usuarioId,
             nombre_usuario: nombreUsuario,
             talla: talla
-        }, { 
-            onConflict: 'sesion_id, usuario_id' 
-        })
+        }, { onConflict: 'sesion_id, usuario_id' })
         .select()
         .single();
-    
     if (error) throw error;
     return data;
 }
 
 // ============================================
-// FUNCIONES DE AUTENTICACIÓN
+// FUNCIONES DE STORAGE (Avatar)
 // ============================================
-
-async function signUp(email, password, userData) {
-    const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            data: userData
-        }
-    });
-    
-    if (error) throw error;
-    return data;
-}
-
-async function signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
-    
-    if (error) throw error;
-    return data;
-}
-
-async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-}
-
-async function getCurrentUser() {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return data.user;
-}
-
-async function getSession() {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return data.session;
-}
-
-// ============================================
-// FUNCIONES DE STORAGE (para fotos de perfil)
-// ============================================
-
 async function uploadAvatar(userId, file) {
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
     
-    // Subir archivo
     const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
     
     if (uploadError) throw uploadError;
     
-    // Obtener URL pública
     const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-    
-    // Actualizar usuario con URL
-    await updateUsuario(userId, { avatar_url: urlData.publicUrl });
     
     return urlData.publicUrl;
 }
 
 // ============================================
-// EXPORTAR FUNCIONES (para usar en app.js)
+// EXPORTAR PARA USAR EN app.js
 // ============================================
-window.db = {
+window.SupabaseAPI = {
+    // Auth
+    signUp,
+    signIn,
+    signOut,
+    getSession,
+    getCurrentUser,
+    
     // Usuarios
     getUsuario,
     updateUsuario,
+    getUsuarioByEmail,
     
     // Grupos
     getGrupos,
@@ -305,21 +293,20 @@ window.db = {
     addMiembro,
     removeMiembro,
     isMiembro,
+    countMiembros,
     
-    // Sesiones y Votos
+    // Sesiones
     getSesionActiva,
     createSesion,
     revealSesion,
+    
+    // Votos
     getVotos,
     upsertVoto,
     
-    // Auth
-    signUp,
-    signIn,
-    signOut,
-    getCurrentUser,
-    getSession,
-    
     // Storage
-    uploadAvatar
+    uploadAvatar,
+    
+    // Supabase instance
+    supabase
 };

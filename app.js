@@ -1,844 +1,574 @@
 // ============================================
-// APLICACIÓN PRINCIPAL CamiX
+// APLICACIÓN PRINCIPAL - CamiX
 // ============================================
 
-// --- ESTADO GLOBAL ---
+// --- Obtener API de Supabase ---
+const API = window.SupabaseAPI;
+
+// ============================================
+// ESTADO GLOBAL
+// ============================================
 const state = {
-    session: null,
-    currentUser: null,
-    currentUserData: null,
-    currentGroup: null,
-    currentGroupMembers: [],
-    currentSessionId: null,
+    user: null,
+    userData: null,
+    group: null,
+    sessionId: null,
     isFacilitator: false,
     votesRevealed: false,
-    realtimeChannels: []
-};
-
-// --- ELEMENTOS DEL DOM ---
-const DOM = {
-    // Screens
-    auth: document.getElementById('auth-screen'),
-    dashboard: document.getElementById('dashboard-screen'),
-    room: document.getElementById('room-screen'),
-    profile: document.getElementById('profile-screen'),
-    groupMembers: document.getElementById('group-members-screen'),
-    
-    // Auth
-    authEmail: document.getElementById('auth-email'),
-    authPassword: document.getElementById('auth-password'),
-    authError: document.getElementById('auth-error'),
-    btnLogin: document.getElementById('btn-login'),
-    btnShowRegister: document.getElementById('btn-show-register'),
-    btnBackLogin: document.getElementById('btn-back-login'),
-    loginForm: document.getElementById('login-form'),
-    registerForm: document.getElementById('register-form'),
-    
-    // Register
-    regEmail: document.getElementById('reg-email'),
-    regPassword: document.getElementById('reg-password'),
-    regNombre: document.getElementById('reg-nombre'),
-    regApellido: document.getElementById('reg-apellido'),
-    regEdad: document.getElementById('reg-edad'),
-    regUsername: document.getElementById('reg-username'),
-    regGenderError: document.getElementById('reg-gender-error'),
-    btnRegister: document.getElementById('btn-register'),
-    regError: document.getElementById('reg-error'),
-    genderOptions: document.querySelectorAll('.gender-option'),
-    
-    // Dashboard
-    dashboardUserEmail: document.getElementById('dashboard-user-email'),
-    dashboardUserName: document.getElementById('dashboard-user-name'),
-    dashboardUserAvatar: document.getElementById('dashboard-user-avatar'),
-    btnLogout: document.getElementById('btn-logout'),
-    btnProfile: document.getElementById('btn-profile'),
-    newGroupName: document.getElementById('new-group-name'),
-    btnCreateGroup: document.getElementById('btn-create-group'),
-    groupsList: document.getElementById('groups-list'),
-    
-    // Profile
-    profileUserName: document.getElementById('profile-user-name'),
-    profileUserEmail: document.getElementById('profile-user-email'),
-    profileUserAvatar: document.getElementById('profile-user-avatar'),
-    profileUsername: document.getElementById('profile-username'),
-    profileNombre: document.getElementById('profile-nombre'),
-    profileApellido: document.getElementById('profile-apellido'),
-    profileEdad: document.getElementById('profile-edad'),
-    profileSexo: document.getElementById('profile-sexo'),
-    profileBio: document.getElementById('profile-bio'),
-    profileAvatarInput: document.getElementById('profile-avatar-input'),
-    btnUpdateProfile: document.getElementById('btn-update-profile'),
-    btnBackFromProfile: document.getElementById('btn-back-from-profile'),
-    
-    // Group Members
-    membersList: document.getElementById('members-list'),
-    inviteEmail: document.getElementById('invite-email'),
-    btnInviteMember: document.getElementById('btn-invite-member'),
-    btnBackFromMembers: document.getElementById('btn-back-from-members'),
-    groupMembersTitle: document.getElementById('group-members-title'),
-    
-    // Room
-    roomTitle: document.getElementById('room-title'),
-    btnBackDashboard: document.getElementById('btn-back-dashboard'),
-    facilitatorPanel: document.getElementById('facilitator-panel'),
-    taskNameInput: document.getElementById('task-name-input'),
-    btnLaunchVoting: document.getElementById('btn-launch-voting'),
-    btnRevealVotes: document.getElementById('btn-reveal-votes'),
-    currentTaskName: document.getElementById('current-task-name'),
-    teamStatusList: document.getElementById('team-status-list'),
-    tshirtButtons: document.querySelectorAll('[data-size]'),
-    btnManageMembers: document.getElementById('btn-manage-members'),
+    channels: []
 };
 
 // ============================================
-// NAVEGACIÓN
+// DOM REFS (Cache de elementos)
 // ============================================
-function showScreen(screenName) {
-    const screens = ['auth', 'dashboard', 'room', 'profile', 'group-members'];
-    screens.forEach(name => {
-        const el = document.getElementById(`${name}-screen`);
-        if (el) el.classList.toggle('active', name === screenName);
-    });
+const $ = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+
+// ============================================
+// UTILIDADES
+// ============================================
+function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(name + '-screen');
+    if (target) target.classList.add('active');
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+function getInitials(name) {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+function updateAvatar(containerId, avatarUrl, name) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (avatarUrl) {
+        container.innerHTML = `<img src="${avatarUrl}" alt="Avatar">`;
+        container.className = 'avatar avatar-lg';
+    } else {
+        container.textContent = getInitials(name || 'Usuario');
+        container.className = 'avatar avatar-lg';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+    }
 }
 
 // ============================================
 // AUTENTICACIÓN
 // ============================================
-function toggleForms(showRegister) {
-    if (showRegister) {
-        DOM.loginForm.classList.add('hidden');
-        DOM.registerForm.classList.remove('hidden');
-        DOM.authError.textContent = '';
-    } else {
-        DOM.loginForm.classList.remove('hidden');
-        DOM.registerForm.classList.add('hidden');
-        DOM.regError.textContent = '';
-        DOM.regGenderError.classList.add('hidden');
-        DOM.genderOptions.forEach(opt => opt.classList.remove('selected'));
-    }
-}
-
-// Selección de género
-DOM.genderOptions.forEach(option => {
-    option.addEventListener('click', function() {
-        DOM.genderOptions.forEach(opt => opt.classList.remove('selected'));
-        this.classList.add('selected');
-        const radio = this.querySelector('input[type="radio"]');
-        radio.checked = true;
-        DOM.regGenderError.classList.add('hidden');
-    });
-});
-
-// Registro
-async function handleRegister(email, password, nombre, apellido, username, edad, sexo) {
-    try {
-        DOM.regError.textContent = '';
-        
-        // Validaciones
-        if (!email || !password || !nombre || !apellido || !username || !edad || !sexo) {
-            DOM.regError.textContent = 'Todos los campos son obligatorios';
-            return;
-        }
-        
-        if (password.length < 6) {
-            DOM.regError.textContent = 'La contraseña debe tener al menos 6 caracteres';
-            return;
-        }
-        
-        if (edad < 1 || edad > 120) {
-            DOM.regError.textContent = 'Edad no válida';
-            return;
-        }
-        
-        // Verificar si el username ya existe
-        const { data: existingUser } = await supabase
-            .from('usuarios')
-            .select('username')
-            .eq('username', username)
-            .maybeSingle();
-        
-        if (existingUser) {
-            DOM.regError.textContent = 'Este nombre de usuario ya está en uso';
-            return;
-        }
-        
-        // Registrar usuario
-        const { data, error } = await db.signUp(email, password, {
-            nombre: nombre,
-            apellido: apellido,
-            username: username,
-            edad: edad,
-            sexo: sexo
-        });
-        
-        if (error) throw error;
-        
-        if (data.user?.identities?.length === 0) {
-            throw new Error('Este correo ya está registrado');
-        }
-        
-        DOM.regError.textContent = '✅ ¡Registro exitoso! Revisa tu correo para confirmar.';
-        DOM.regError.classList.remove('text-red-400');
-        DOM.regError.classList.add('text-emerald-400');
-        
-        // Limpiar formulario
-        DOM.regEmail.value = '';
-        DOM.regPassword.value = '';
-        DOM.regNombre.value = '';
-        DOM.regApellido.value = '';
-        DOM.regUsername.value = '';
-        DOM.regEdad.value = '';
-        DOM.genderOptions.forEach(opt => opt.classList.remove('selected'));
-        
-        setTimeout(() => {
-            toggleForms(false);
-            DOM.regError.textContent = '';
-        }, 3000);
-        
-    } catch (error) {
-        DOM.regError.textContent = error.message || 'Error en el registro';
-        DOM.regError.classList.add('text-red-400');
-        DOM.regError.classList.remove('text-emerald-400');
-    }
-}
-
-// Login
 async function handleLogin(email, password) {
     try {
-        DOM.authError.textContent = '';
-        const { user, session } = await db.signIn(email, password);
+        const errEl = $('auth-error');
+        errEl.textContent = '';
         
-        state.session = session;
-        state.currentUser = user;
-        
-        // Cargar datos del usuario
-        state.currentUserData = await db.getUsuario(user.id);
+        const { user } = await API.signIn(email, password);
+        state.user = user;
+        state.userData = await API.getUsuario(user.id);
         await showDashboard();
-        
     } catch (error) {
-        DOM.authError.textContent = error.message || 'Error de autenticación';
+        $('auth-error').textContent = error.message;
     }
 }
 
-// Logout
+async function handleRegister(email, password, nombre, apellido, username, edad, sexo) {
+    try {
+        const errEl = $('reg-error');
+        errEl.textContent = '';
+
+        if (!email || !password || !nombre || !apellido || !username || !edad || !sexo) {
+            errEl.textContent = 'Todos los campos son obligatorios';
+            return;
+        }
+        if (password.length < 6) {
+            errEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
+            return;
+        }
+        if (edad < 1 || edad > 120) {
+            errEl.textContent = 'Edad no válida';
+            return;
+        }
+
+        // Verificar username único
+        const existing = await API.getUsuarioByEmail(email);
+        if (existing) {
+            errEl.textContent = 'Este correo ya está registrado';
+            return;
+        }
+
+        const { user } = await API.signUp(email, password, {
+            nombre,
+            apellido,
+            username,
+            edad,
+            sexo
+        });
+
+        errEl.textContent = '✅ Registro exitoso. Revisa tu correo para confirmar.';
+        errEl.className = 'text-emerald-400 text-xs mt-2 text-center';
+
+        // Limpiar formulario
+        $('reg-email').value = '';
+        $('reg-password').value = '';
+        $('reg-nombre').value = '';
+        $('reg-apellido').value = '';
+        $('reg-username').value = '';
+        $('reg-edad').value = '';
+        $$('.gender-option').forEach(el => el.classList.remove('selected'));
+
+        setTimeout(() => {
+            toggleForms(false);
+            errEl.textContent = '';
+        }, 3000);
+
+    } catch (error) {
+        const errEl = $('reg-error');
+        errEl.textContent = error.message;
+        errEl.className = 'text-red-400 text-xs mt-2 text-center';
+    }
+}
+
 async function handleLogout() {
     cleanupChannels();
-    await db.signOut();
-    state.session = null;
-    state.currentUser = null;
-    state.currentUserData = null;
-    state.currentGroup = null;
+    await API.signOut();
+    state.user = null;
+    state.userData = null;
+    state.group = null;
     showScreen('auth');
+}
+
+function toggleForms(showRegister) {
+    $('login-form').classList.toggle('hidden', showRegister);
+    $('register-form').classList.toggle('hidden', !showRegister);
+    $('auth-error').textContent = '';
+    $('reg-error').textContent = '';
 }
 
 // ============================================
 // DASHBOARD
 // ============================================
 async function showDashboard() {
-    if (!state.currentUser) return;
+    if (!state.user) return;
     showScreen('dashboard');
-    
-    // Mostrar info del usuario
-    DOM.dashboardUserEmail.textContent = state.currentUser.email;
-    if (state.currentUserData) {
-        const displayName = state.currentUserData.username || state.currentUserData.nombre || 'Usuario';
-        DOM.dashboardUserName.textContent = `@${displayName}`;
-        if (state.currentUserData.avatar_url) {
-            DOM.dashboardUserAvatar.src = state.currentUserData.avatar_url;
-        }
-    }
-    
+
+    $('dashboard-user-email').textContent = state.user.email;
+    const displayName = state.userData?.username || state.userData?.nombre || 'Usuario';
+    $('dashboard-user-name').textContent = '@' + displayName;
+    updateAvatar('dashboard-avatar', state.userData?.avatar_url, displayName);
+
     await loadGroups();
 }
 
 async function loadGroups() {
     try {
-        const grupos = await db.getGrupos();
-        
+        const grupos = await API.getGrupos();
+        const container = $('groups-list');
+
         if (!grupos || grupos.length === 0) {
-            DOM.groupsList.innerHTML = `
-                <div class="text-center py-8">
-                    <p class="text-slate-500 text-sm">No hay grupos aún</p>
-                    <p class="text-slate-600 text-xs mt-1">¡Crea tu primer grupo!</p>
-                </div>
-            `;
+            container.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">No hay grupos aún</p></div>`;
             return;
         }
-        
-        // Obtener información de usuarios
+
+        // Obtener info de creadores
         const userIds = [...new Set(grupos.map(g => g.creado_por).filter(Boolean))];
         const userMap = {};
-        
         if (userIds.length > 0) {
-            const { data: users } = await supabase
+            const { data: users } = await API.supabase
                 .from('usuarios')
-                .select('id, nombre, username, avatar_url')
+                .select('id, nombre, username')
                 .in('id', userIds);
-            
-            if (users) {
-                users.forEach(u => {
-                    userMap[u.id] = u;
-                });
-            }
+            if (users) users.forEach(u => { userMap[u.id] = u; });
         }
-        
-        // Verificar membresía para cada grupo
-        const groupHTML = await Promise.all(grupos.map(async (grupo) => {
-            const isMember = await db.isMiembro(grupo.id, state.currentUser.id);
-            const isCreator = grupo.creado_por === state.currentUser.id;
+
+        let html = '';
+        for (const grupo of grupos) {
+            const isMember = await API.isMiembro(grupo.id, state.user.id);
+            const isCreator = grupo.creado_por === state.user.id;
             const creatorInfo = userMap[grupo.creado_por];
             
             let creatorDisplay = 'Usuario desconocido';
-            if (isCreator) {
-                creatorDisplay = '👤 Tú';
-            } else if (creatorInfo) {
-                creatorDisplay = creatorInfo.username || creatorInfo.nombre || creatorInfo.email;
-            }
-            
-            // Obtener conteo de miembros
-            const { count } = await supabase
-                .from('miembros_grupo')
-                .select('*', { count: 'exact', head: true })
-                .eq('grupo_id', grupo.id);
-            
-            return `
-                <div class="flex justify-between items-center p-4 bg-slate-800/40 rounded-xl border border-slate-700/50 hover:border-emerald-600/50 transition-all">
+            if (isCreator) creatorDisplay = '👤 Tú';
+            else if (creatorInfo) creatorDisplay = creatorInfo.username || creatorInfo.nombre;
+
+            const count = await API.countMiembros(grupo.id);
+
+            html += `
+                <div class="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-800/40 rounded-xl border border-slate-700/50 hover:border-emerald-600/50">
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
                             <p class="text-sm font-semibold text-slate-200 truncate">${escapeHtml(grupo.nombre)}</p>
                             ${isCreator ? '<span class="badge badge-amber">👑 Creador</span>' : ''}
                             ${isMember && !isCreator ? '<span class="badge badge-green">✓ Miembro</span>' : ''}
                         </div>
-                        <div class="flex items-center gap-3 mt-1">
-                            <p class="text-xs text-slate-500">Creado por: ${escapeHtml(creatorDisplay)}</p>
-                            <span class="text-xs text-slate-600">• ${count || 0} miembros</span>
-                        </div>
-                        <p class="text-xs text-slate-600">${new Date(grupo.creado_en).toLocaleDateString('es-ES')}</p>
+                        <p class="text-xs text-slate-500">Creado por: ${escapeHtml(creatorDisplay)} • ${count || 0} miembros</p>
                     </div>
-                    <div class="flex items-center gap-2 flex-shrink-0 ml-3">
+                    <div class="flex gap-2">
                         ${isMember || isCreator ? `
-                            <button data-group-id="${grupo.id}" data-group-name="${escapeHtml(grupo.nombre)}" 
-                                    class="btn-enter-room bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all border border-emerald-600/30">
-                                Entrar
-                            </button>
+                            <button class="btn-enter bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white px-4 py-1.5 rounded-lg text-xs font-semibold border border-emerald-600/30"
+                                    data-id="${grupo.id}" data-name="${escapeHtml(grupo.nombre)}">Entrar</button>
                         ` : `
-                            <button data-group-id="${grupo.id}" class="btn-join-group bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all border border-amber-600/30">
-                                Unirse
-                            </button>
+                            <button class="btn-join bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white px-4 py-1.5 rounded-lg text-xs font-semibold border border-amber-600/30"
+                                    data-id="${grupo.id}">Unirse</button>
                         `}
                         ${isCreator ? `
-                            <button data-group-id="${grupo.id}" class="btn-delete-group text-red-400 hover:text-red-300 hover:bg-red-400/10 p-1.5 rounded-lg transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <button class="btn-delete text-red-400 hover:text-red-300 hover:bg-red-400/10 p-1.5 rounded-lg"
+                                    data-id="${grupo.id}">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
                             </button>
                         ` : ''}
                     </div>
                 </div>
             `;
-        }));
-        
-        DOM.groupsList.innerHTML = groupHTML.join('');
-        
+        }
+
+        container.innerHTML = html;
+
         // Event listeners
-        document.querySelectorAll('.btn-enter-room').forEach(btn => {
-            btn.addEventListener('click', () => {
-                enterRoom(btn.dataset.groupId, btn.dataset.groupName);
-            });
+        container.querySelectorAll('.btn-enter').forEach(btn => {
+            btn.addEventListener('click', () => enterRoom(btn.dataset.id, btn.dataset.name));
         });
-        
-        document.querySelectorAll('.btn-join-group').forEach(btn => {
-            btn.addEventListener('click', () => {
-                joinGroup(btn.dataset.groupId);
-            });
+        container.querySelectorAll('.btn-join').forEach(btn => {
+            btn.addEventListener('click', () => joinGroup(btn.dataset.id));
         });
-        
-        document.querySelectorAll('.btn-delete-group').forEach(btn => {
-            btn.addEventListener('click', () => {
-                deleteGroup(btn.dataset.groupId);
-            });
+        container.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', () => deleteGroup(btn.dataset.id));
         });
-        
+
     } catch (error) {
-        console.error('Error en loadGroups:', error);
-        DOM.groupsList.innerHTML = `<p class="text-red-400 text-xs py-4 text-center">Error: ${error.message}</p>`;
+        $('groups-list').innerHTML = `<p class="text-red-400 text-xs">Error: ${error.message}</p>`;
     }
 }
 
-async function createGroup(name) {
-    if (!name.trim()) {
-        alert('Por favor ingresa un nombre para el grupo');
-        return;
-    }
-    
+async function createGroup() {
+    const name = $('new-group-name').value.trim();
+    if (!name) { alert('Ingresa un nombre'); return; }
     try {
-        const grupo = await db.createGrupo(name, state.currentUser.id);
-        // El creador automáticamente es miembro
-        await db.addMiembro(grupo.id, state.currentUser.id, 'admin');
-        DOM.newGroupName.value = '';
+        const grupo = await API.createGrupo(name, state.user.id);
+        await API.addMiembro(grupo.id, state.user.id, 'admin');
+        $('new-group-name').value = '';
         await loadGroups();
     } catch (error) {
-        alert('Error al crear grupo: ' + error.message);
+        alert('Error: ' + error.message);
     }
 }
 
-async function joinGroup(groupId) {
+async function joinGroup(id) {
     try {
-        await db.addMiembro(groupId, state.currentUser.id, 'miembro');
+        await API.addMiembro(id, state.user.id, 'miembro');
         await loadGroups();
     } catch (error) {
-        alert('Error al unirse al grupo: ' + error.message);
+        alert('Error: ' + error.message);
     }
 }
 
-async function deleteGroup(groupId) {
-    if (!confirm('¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.')) {
-        return;
-    }
-    
+async function deleteGroup(id) {
+    if (!confirm('¿Eliminar este grupo?')) return;
     try {
-        await db.deleteGrupo(groupId);
+        await API.deleteGrupo(id);
         await loadGroups();
     } catch (error) {
-        alert('Error al eliminar grupo: ' + error.message);
+        alert('Error: ' + error.message);
     }
 }
 
 // ============================================
-// PERFIL DE USUARIO
+// PERFIL
 // ============================================
 async function showProfile() {
     showScreen('profile');
-    
-    const user = state.currentUserData;
+    const user = state.userData;
     if (!user) return;
-    
-    DOM.profileUserName.textContent = user.username || user.nombre || 'Usuario';
-    DOM.profileUserEmail.textContent = user.email || state.currentUser.email;
-    DOM.profileUserAvatar.src = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'User')}&background=166534&color=4ade80&size=128`;
-    
-    DOM.profileUsername.value = user.username || '';
-    DOM.profileNombre.value = user.nombre || '';
-    DOM.profileApellido.value = user.apellido || '';
-    DOM.profileEdad.value = user.edad || '';
-    DOM.profileSexo.value = user.sexo || '';
-    DOM.profileBio.value = user.bio || '';
+
+    $('profile-user-name').textContent = user.username || user.nombre || 'Usuario';
+    $('profile-user-email').textContent = user.email || state.user.email;
+    updateAvatar('profile-avatar', user.avatar_url, user.nombre || user.username);
+
+    $('profile-username').value = user.username || '';
+    $('profile-nombre').value = user.nombre || '';
+    $('profile-apellido').value = user.apellido || '';
+    $('profile-edad').value = user.edad || '';
+    $('profile-sexo').value = user.sexo || '';
+    $('profile-bio').value = user.bio || '';
 }
 
 async function updateProfile() {
     try {
         const updates = {
-            username: DOM.profileUsername.value.trim(),
-            nombre: DOM.profileNombre.value.trim(),
-            apellido: DOM.profileApellido.value.trim(),
-            edad: parseInt(DOM.profileEdad.value),
-            sexo: DOM.profileSexo.value,
-            bio: DOM.profileBio.value.trim()
+            username: $('profile-username').value.trim(),
+            nombre: $('profile-nombre').value.trim(),
+            apellido: $('profile-apellido').value.trim(),
+            edad: parseInt($('profile-edad').value),
+            sexo: $('profile-sexo').value,
+            bio: $('profile-bio').value.trim()
         };
-        
-        if (updates.edad < 1 || updates.edad > 120) {
-            alert('Edad no válida');
-            return;
-        }
-        
-        // Verificar username único
-        if (updates.username) {
-            const { data: existing } = await supabase
-                .from('usuarios')
-                .select('id')
-                .eq('username', updates.username)
-                .neq('id', state.currentUser.id)
-                .maybeSingle();
-            
-            if (existing) {
-                alert('Este nombre de usuario ya está en uso');
-                return;
-            }
-        }
-        
-        state.currentUserData = await db.updateUsuario(state.currentUser.id, updates);
-        alert('✅ Perfil actualizado correctamente');
-        await showProfile();
-        await showDashboard();
-        
-    } catch (error) {
-        alert('Error al actualizar perfil: ' + error.message);
-    }
-}
 
-async function uploadAvatar(file) {
-    try {
-        const url = await db.uploadAvatar(state.currentUser.id, file);
-        state.currentUserData.avatar_url = url;
+        if (updates.edad < 1 || updates.edad > 120) { alert('Edad no válida'); return; }
+
+        state.userData = await API.updateUsuario(state.user.id, updates);
+        alert('✅ Perfil actualizado');
         await showProfile();
         await showDashboard();
-        alert('✅ Foto de perfil actualizada');
     } catch (error) {
-        alert('Error al subir foto: ' + error.message);
+        alert('Error: ' + error.message);
     }
 }
 
 // ============================================
-// GESTIÓN DE MIEMBROS
+// MIEMBROS
 // ============================================
-async function showGroupMembers() {
-    if (!state.currentGroup) return;
-    showScreen('group-members');
-    
-    DOM.groupMembersTitle.textContent = `Miembros de: ${state.currentGroup.name}`;
+async function showMembers() {
+    if (!state.group) return;
+    showScreen('members');
+    $('members-title').textContent = `Miembros de: ${state.group.name}`;
     await loadMembers();
 }
 
 async function loadMembers() {
     try {
-        const miembros = await db.getMiembros(state.currentGroup.id);
-        
+        const miembros = await API.getMiembros(state.group.id);
+        const container = $('members-list');
+
         if (!miembros || miembros.length === 0) {
-            DOM.membersList.innerHTML = `
-                <div class="text-center py-8">
-                    <p class="text-slate-500 text-sm">No hay miembros en este grupo</p>
-                    <p class="text-slate-600 text-xs mt-1">Invita a tu equipo</p>
-                </div>
-            `;
+            container.innerHTML = `<p class="text-slate-500 text-sm py-4 text-center">No hay miembros</p>`;
             return;
         }
-        
-        DOM.membersList.innerHTML = miembros.map(m => {
-            const isCreator = m.usuario_id === state.currentGroup.creator;
-            const isCurrentUser = m.usuario_id === state.currentUser.id;
+
+        container.innerHTML = miembros.map(m => {
+            const isCreator = m.usuario_id === state.group.creator;
+            const isCurrent = m.usuario_id === state.user.id;
             const user = m.usuario || {};
-            const displayName = user.username || user.nombre || user.email || 'Usuario';
-            
+            const name = user.username || user.nombre || user.email || 'Usuario';
+
             return `
                 <div class="member-item">
                     <div class="member-info">
-                        ${user.avatar_url ? 
-                            `<img src="${user.avatar_url}" class="avatar avatar-sm">` :
-                            `<div class="avatar avatar-sm">${displayName.charAt(0).toUpperCase()}</div>`
-                        }
+                        <div class="avatar avatar-sm">${name.charAt(0).toUpperCase()}</div>
                         <div>
-                            <span class="text-sm font-medium text-slate-200">${escapeHtml(displayName)}</span>
+                            <span class="text-sm font-medium">${escapeHtml(name)}</span>
                             ${isCreator ? '<span class="badge badge-amber ml-2">Creador</span>' : ''}
-                            ${isCurrentUser ? '<span class="badge badge-green ml-2">Tú</span>' : ''}
+                            ${isCurrent ? '<span class="badge badge-green ml-2">Tú</span>' : ''}
                         </div>
                     </div>
-                    ${!isCreator && isCurrentUser ? `
-                        <button data-user-id="${m.usuario_id}" class="btn-remove-member btn-danger">
-                            Eliminar
-                        </button>
+                    ${!isCreator && !isCurrent && state.group.creator === state.user.id ? `
+                        <button class="btn-remove-member btn-danger" data-id="${m.usuario_id}">Eliminar</button>
                     ` : ''}
                 </div>
             `;
         }).join('');
-        
-        // Event listeners para eliminar miembros
-        document.querySelectorAll('.btn-remove-member').forEach(btn => {
-            btn.addEventListener('click', () => {
-                removeMember(btn.dataset.userId);
-            });
+
+        container.querySelectorAll('.btn-remove-member').forEach(btn => {
+            btn.addEventListener('click', () => removeMember(btn.dataset.id));
         });
-        
+
     } catch (error) {
-        console.error('Error loading members:', error);
-        DOM.membersList.innerHTML = `<p class="text-red-400 text-xs">Error: ${error.message}</p>`;
+        $('members-list').innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
     }
 }
 
-async function inviteMember(email) {
-    if (!email.trim()) {
-        alert('Ingresa un correo electrónico');
-        return;
-    }
-    
+async function inviteMember() {
+    const email = $('invite-email').value.trim();
+    if (!email) { alert('Ingresa un correo'); return; }
     try {
-        // Buscar usuario por email
-        const { data: user } = await supabase
-            .from('usuarios')
-            .select('id')
-            .eq('email', email.trim())
-            .maybeSingle();
-        
-        if (!user) {
-            alert('Usuario no encontrado. Asegúrate de que esté registrado.');
-            return;
-        }
-        
-        // Verificar si ya es miembro
-        const isMember = await db.isMiembro(state.currentGroup.id, user.id);
-        if (isMember) {
-            alert('Este usuario ya es miembro del grupo');
-            return;
-        }
-        
-        await db.addMiembro(state.currentGroup.id, user.id, 'miembro');
-        DOM.inviteEmail.value = '';
+        const user = await API.getUsuarioByEmail(email);
+        if (!user) { alert('Usuario no registrado'); return; }
+        if (await API.isMiembro(state.group.id, user.id)) { alert('Ya es miembro'); return; }
+        await API.addMiembro(state.group.id, user.id, 'miembro');
+        $('invite-email').value = '';
         await loadMembers();
-        alert('✅ Usuario invitado exitosamente');
-        
+        alert('✅ Invitado exitosamente');
     } catch (error) {
-        alert('Error al invitar: ' + error.message);
+        alert('Error: ' + error.message);
     }
 }
 
-async function removeMember(userId) {
-    if (!confirm('¿Quieres eliminar a este miembro del grupo?')) return;
-    
+async function removeMember(id) {
+    if (!confirm('¿Eliminar este miembro?')) return;
     try {
-        await db.removeMiembro(state.currentGroup.id, userId);
+        await API.removeMiembro(state.group.id, id);
         await loadMembers();
     } catch (error) {
-        alert('Error al eliminar miembro: ' + error.message);
+        alert('Error: ' + error.message);
     }
 }
 
 // ============================================
 // SALA DE ESTIMACIÓN
 // ============================================
-async function enterRoom(groupId, groupName) {
+async function enterRoom(id, name) {
     cleanupChannels();
-    
-    // Obtener información del grupo
-    const grupo = await db.getGrupoById(groupId);
-    state.currentGroup = { 
-        id: groupId, 
-        name: groupName,
-        creator: grupo.creado_por
-    };
-    
-    // Verificar si es facilitador (creador del grupo)
-    state.isFacilitator = (grupo.creado_por === state.currentUser.id);
-    state.currentSessionId = null;
-    state.votesRevealed = false;
-    
-    DOM.roomTitle.textContent = groupName;
+
+    const grupo = await API.getGrupoById(id);
+
+    state.group = { id, name, creator: grupo.creado_por };
+    state.isFacilitator = (grupo.creado_por === state.user.id);
+    state.sessionId = null;
+
+    $('room-title').textContent = name;
     showScreen('room');
-    
-    // Mostrar/ocultar panel de facilitador
-    if (state.isFacilitator) {
-        DOM.facilitatorPanel.classList.remove('hidden');
-    } else {
-        DOM.facilitatorPanel.classList.add('hidden');
-    }
-    
-    // Resetear UI
-    DOM.taskNameInput.value = '';
-    DOM.currentTaskName.textContent = '—';
-    DOM.teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Cargando estado...</p>';
-    resetTshirtButtons();
-    
-    // Cargar sesión activa
-    await loadActiveSession(groupId);
-    subscribeToRoomUpdates(groupId);
+
+    $('facilitator-panel').classList.toggle('hidden', !state.isFacilitator);
+    $('task-name').value = '';
+    $('current-task').textContent = '—';
+
+    await loadActiveSession(id);
+    subscribeToRoom(id);
 }
 
 async function loadActiveSession(groupId) {
     try {
-        const sesion = await db.getSesionActiva(groupId);
-        
+        const sesion = await API.getSesionActiva(groupId);
         if (sesion) {
-            state.currentSessionId = sesion.id;
-            DOM.currentTaskName.textContent = sesion.nombre_tarea;
+            state.sessionId = sesion.id;
             state.votesRevealed = sesion.estado === 'revelado';
+            $('current-task').textContent = sesion.nombre_tarea;
             await loadTeamStatus();
         } else {
-            state.currentSessionId = null;
-            DOM.currentTaskName.textContent = '—';
-            DOM.teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando nueva votación...</p>';
+            state.sessionId = null;
+            $('current-task').textContent = '—';
+            $('team-status').innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando votación...</p>';
         }
     } catch (error) {
-        console.error('Error loading session:', error);
+        console.error(error);
     }
 }
 
 async function launchVoting() {
-    const taskName = DOM.taskNameInput.value.trim();
-    if (!taskName) {
-        alert('Escribe el nombre de la tarea');
-        return;
-    }
-    if (!state.currentGroup) return;
-    
+    const taskName = $('task-name').value.trim();
+    if (!taskName) { alert('Escribe el nombre de la tarea'); return; }
     try {
-        // Finalizar sesiones anteriores
-        await supabase
+        await API.supabase
             .from('sesiones')
             .update({ estado: 'revelado' })
-            .eq('grupo_id', state.currentGroup.id)
+            .eq('grupo_id', state.group.id)
             .eq('estado', 'votando');
-        
-        const sesion = await db.createSesion(state.currentGroup.id, taskName);
-        
-        state.currentSessionId = sesion.id;
-        state.votesRevealed = false;
-        DOM.currentTaskName.textContent = taskName;
-        DOM.taskNameInput.value = '';
-        resetTshirtButtons();
-        await loadTeamStatus();
-        
-    } catch (error) {
-        alert('Error al lanzar votación: ' + error.message);
-    }
-}
 
-async function castVote(size) {
-    if (!state.currentSessionId || !state.currentUser) {
-        alert('No hay votación activa');
-        return;
-    }
-    
-    try {
-        const nombreUsuario = state.currentUserData?.username || 
-                            state.currentUserData?.nombre || 
-                            state.currentUser.email;
-        
-        await db.upsertVoto(
-            state.currentSessionId,
-            state.currentUser.id,
-            nombreUsuario,
-            size
-        );
-        
-        highlightSelectedSize(size);
-        
+        const sesion = await API.createSesion(state.group.id, taskName);
+        state.sessionId = sesion.id;
+        state.votesRevealed = false;
+        $('current-task').textContent = taskName;
+        $('task-name').value = '';
+        await loadTeamStatus();
     } catch (error) {
-        alert('Error al votar: ' + error.message);
+        alert('Error: ' + error.message);
     }
 }
 
 async function revealVotes() {
-    if (!state.currentSessionId) return;
-    
+    if (!state.sessionId) return;
     try {
-        await db.revealSesion(state.currentSessionId);
+        await API.revealSesion(state.sessionId);
         state.votesRevealed = true;
         await loadTeamStatus();
     } catch (error) {
-        alert('Error al revelar votos: ' + error.message);
+        alert('Error: ' + error.message);
+    }
+}
+
+async function castVote(size) {
+    if (!state.sessionId) { alert('No hay votación activa'); return; }
+    try {
+        const nombre = state.userData?.username || state.userData?.nombre || state.user.email;
+        await API.upsertVoto(state.sessionId, state.user.id, nombre, size);
+        $$('.tshirt-btn').forEach(b => {
+            b.classList.toggle('selected-vote', b.dataset.size === size);
+        });
+    } catch (error) {
+        alert('Error: ' + error.message);
     }
 }
 
 async function loadTeamStatus() {
-    if (!state.currentSessionId) {
-        DOM.teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Sin votación activa</p>';
+    if (!state.sessionId) {
+        $('team-status').innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Sin votación activa</p>';
         return;
     }
-    
+
     try {
-        const votos = await db.getVotos(state.currentSessionId);
+        const votos = await API.getVotos(state.sessionId);
         const votesMap = {};
-        if (votos) {
-            votos.forEach(v => {
-                votesMap[v.usuario_id] = { talla: v.talla, nombre: v.nombre_usuario };
-            });
-        }
-        
-        // Obtener miembros del grupo para mostrar quiénes deberían votar
-        const miembros = await db.getMiembros(state.currentGroup.id);
+        votos.forEach(v => { votesMap[v.usuario_id] = v.talla; });
+
+        const miembros = await API.getMiembros(state.group.id);
         const participants = new Map();
-        
-        // Primero agregar miembros del grupo
-        if (miembros) {
-            miembros.forEach(m => {
-                const user = m.usuario || {};
-                const displayName = user.username || user.nombre || user.email || 'Usuario';
-                participants.set(m.usuario_id, displayName);
-            });
-        }
-        
-        // Si no hay miembros, mostrar solo votantes
-        if (participants.size === 0 && votos) {
-            votos.forEach(v => {
-                participants.set(v.usuario_id, v.nombre_usuario);
-            });
-        }
-        
+        miembros.forEach(m => {
+            const user = m.usuario || {};
+            const name = user.username || user.nombre || user.email || 'Usuario';
+            participants.set(m.usuario_id, name);
+        });
+
         if (participants.size === 0) {
-            DOM.teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando participantes...</p>';
+            $('team-status').innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando participantes...</p>';
             return;
         }
-        
-        DOM.teamStatusList.innerHTML = Array.from(participants.entries()).map(([userId, userName]) => {
-            const hasVoted = votesMap[userId] !== undefined;
-            const voteDisplay = state.votesRevealed && hasVoted ? votesMap[userId].talla : (hasVoted ? '✓ Listo' : '⏳ Pendiente');
-            const isCurrentUser = userId === state.currentUser.id;
-            
-            return `
-                <div class="flex justify-between items-center p-2.5 bg-slate-800/40 rounded-lg ${isCurrentUser ? 'border border-emerald-600/30' : ''}">
+
+        let html = '';
+        for (const [id, name] of participants) {
+            const hasVoted = votesMap[id] !== undefined;
+            const display = state.votesRevealed && hasVoted ? votesMap[id] : (hasVoted ? '✓ Listo' : '⏳ Pendiente');
+            const isCurrent = id === state.user.id;
+            html += `
+                <div class="flex justify-between items-center p-2.5 bg-slate-800/40 rounded-lg ${isCurrent ? 'border border-emerald-600/30' : ''}">
                     <span class="text-sm text-slate-300 flex items-center gap-2">
-                        ${isCurrentUser ? '<span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>' : ''}
-                        ${escapeHtml(userName)}
+                        ${isCurrent ? '<span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>' : ''}
+                        ${escapeHtml(name)}
                     </span>
                     <span class="text-xs font-semibold px-2.5 py-1 rounded-full status-badge
                         ${hasVoted ? 'text-emerald-400 bg-emerald-400/10' : 'text-slate-400 bg-slate-700/50'}">
-                        ${voteDisplay}
+                        ${display}
                     </span>
                 </div>
             `;
-        }).join('');
-        
+        }
+        $('team-status').innerHTML = html;
+
     } catch (error) {
-        console.error('Error loading team status:', error);
+        console.error(error);
     }
 }
 
-function highlightSelectedSize(size) {
-    DOM.tshirtButtons.forEach(btn => {
-        btn.classList.toggle('selected-vote', btn.dataset.size === size);
-    });
-}
-
-function resetTshirtButtons() {
-    DOM.tshirtButtons.forEach(btn => btn.classList.remove('selected-vote'));
-}
-
 // ============================================
-// TIEMPO REAL (SUPABASE CHANNELS)
+// TIEMPO REAL
 // ============================================
-function subscribeToRoomUpdates(groupId) {
+function subscribeToRoom(groupId) {
     cleanupChannels();
-    
-    const sessionChannel = supabase
-        .channel(`sesiones-grupo-${groupId}`)
-        .on('postgres_changes', 
+
+    const channel = API.supabase
+        .channel(`room-${groupId}`)
+        .on('postgres_changes',
             { event: '*', schema: 'public', table: 'sesiones', filter: `grupo_id=eq.${groupId}` },
-            async () => {
-                await loadActiveSession(groupId);
-            }
+            () => loadActiveSession(groupId)
         )
         .subscribe();
-    
-    state.realtimeChannels.push(sessionChannel);
-    
-    if (state.currentSessionId) {
-        const votesChannel = supabase
-            .channel(`votos-sesion-${state.currentSessionId}`)
+
+    state.channels.push(channel);
+
+    if (state.sessionId) {
+        const votesChannel = API.supabase
+            .channel(`votes-${state.sessionId}`)
             .on('postgres_changes',
-                { event: '*', schema: 'public', table: 'votos', filter: `sesion_id=eq.${state.currentSessionId}` },
-                async () => {
-                    await loadTeamStatus();
-                }
+                { event: '*', schema: 'public', table: 'votos', filter: `sesion_id=eq.${state.sessionId}` },
+                () => loadTeamStatus()
             )
             .subscribe();
-        
-        state.realtimeChannels.push(votesChannel);
+        state.channels.push(votesChannel);
     }
 }
 
 function cleanupChannels() {
-    state.realtimeChannels.forEach(channel => {
-        supabase.removeChannel(channel);
-    });
-    state.realtimeChannels = [];
-}
-
-// ============================================
-// UTILIDADES
-// ============================================
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    state.channels.forEach(ch => API.supabase.removeChannel(ch));
+    state.channels = [];
 }
 
 // ============================================
@@ -846,74 +576,78 @@ function escapeHtml(text) {
 // ============================================
 
 // --- Auth ---
-DOM.btnLogin.addEventListener('click', () => handleLogin(DOM.authEmail.value, DOM.authPassword.value));
-DOM.btnShowRegister.addEventListener('click', () => toggleForms(true));
-DOM.btnBackLogin.addEventListener('click', () => toggleForms(false));
+$('btn-login').addEventListener('click', () => {
+    handleLogin($('auth-email').value, $('auth-password').value);
+});
 
-DOM.btnRegister.addEventListener('click', () => {
-    const selectedGender = document.querySelector('input[name="gender"]:checked');
-    if (!selectedGender) {
-        DOM.regGenderError.classList.remove('hidden');
+$('btn-show-register').addEventListener('click', () => toggleForms(true));
+$('btn-back-login').addEventListener('click', () => toggleForms(false));
+
+$('btn-register').addEventListener('click', () => {
+    const selected = document.querySelector('input[name="gender"]:checked');
+    if (!selected) {
+        $('reg-gender-error').classList.remove('hidden');
         return;
     }
-    DOM.regGenderError.classList.add('hidden');
-    
+    $('reg-gender-error').classList.add('hidden');
+
     handleRegister(
-        DOM.regEmail.value,
-        DOM.regPassword.value,
-        DOM.regNombre.value,
-        DOM.regApellido.value,
-        DOM.regUsername.value,
-        parseInt(DOM.regEdad.value),
-        selectedGender.value
+        $('reg-email').value,
+        $('reg-password').value,
+        $('reg-nombre').value,
+        $('reg-apellido').value,
+        $('reg-username').value,
+        parseInt($('reg-edad').value),
+        selected.value
     );
 });
 
 // Enter key para login
-DOM.authEmail.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleLogin(DOM.authEmail.value, DOM.authPassword.value);
+$('auth-email').addEventListener('keypress', e => {
+    if (e.key === 'Enter') handleLogin($('auth-email').value, $('auth-password').value);
 });
-DOM.authPassword.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleLogin(DOM.authEmail.value, DOM.authPassword.value);
+$('auth-password').addEventListener('keypress', e => {
+    if (e.key === 'Enter') handleLogin($('auth-email').value, $('auth-password').value);
+});
+
+// Gender selector
+$$('.gender-option').forEach(el => {
+    el.addEventListener('click', function() {
+        $$('.gender-option').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+        this.querySelector('input').checked = true;
+    });
 });
 
 // --- Dashboard ---
-DOM.btnLogout.addEventListener('click', handleLogout);
-DOM.btnProfile.addEventListener('click', showProfile);
-DOM.btnCreateGroup.addEventListener('click', () => createGroup(DOM.newGroupName.value));
-DOM.newGroupName.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') createGroup(DOM.newGroupName.value);
+$('btn-logout').addEventListener('click', handleLogout);
+$('btn-profile').addEventListener('click', showProfile);
+$('btn-create-group').addEventListener('click', createGroup);
+$('new-group-name').addEventListener('keypress', e => {
+    if (e.key === 'Enter') createGroup();
 });
 
 // --- Profile ---
-DOM.btnBackFromProfile.addEventListener('click', showDashboard);
-DOM.btnUpdateProfile.addEventListener('click', updateProfile);
-DOM.profileAvatarInput.addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-        uploadAvatar(e.target.files[0]);
-    }
-});
+$('btn-back-profile').addEventListener('click', showDashboard);
+$('btn-update-profile').addEventListener('click', updateProfile);
 
-// --- Group Members ---
-DOM.btnBackFromMembers.addEventListener('click', () => {
-    showScreen('room');
-});
-DOM.btnInviteMember.addEventListener('click', () => inviteMember(DOM.inviteEmail.value));
-DOM.inviteEmail.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') inviteMember(DOM.inviteEmail.value);
+// --- Members ---
+$('btn-back-members').addEventListener('click', () => showScreen('room'));
+$('btn-invite').addEventListener('click', inviteMember);
+$('invite-email').addEventListener('keypress', e => {
+    if (e.key === 'Enter') inviteMember();
 });
 
 // --- Room ---
-DOM.btnBackDashboard.addEventListener('click', () => {
+$('btn-back-room').addEventListener('click', () => {
     cleanupChannels();
     showDashboard();
 });
-DOM.btnLaunchVoting.addEventListener('click', launchVoting);
-DOM.btnRevealVotes.addEventListener('click', revealVotes);
-DOM.btnManageMembers.addEventListener('click', showGroupMembers);
+$('btn-members').addEventListener('click', showMembers);
+$('btn-launch').addEventListener('click', launchVoting);
+$('btn-reveal').addEventListener('click', revealVotes);
 
-// T-Shirt voting
-DOM.tshirtButtons.forEach(btn => {
+$$('.tshirt-btn').forEach(btn => {
     btn.addEventListener('click', () => castVote(btn.dataset.size));
 });
 
@@ -922,18 +656,16 @@ DOM.tshirtButtons.forEach(btn => {
 // ============================================
 async function init() {
     try {
-        const session = await db.getSession();
+        const session = await API.getSession();
         if (session) {
-            state.session = session;
-            state.currentUser = session.user;
-            state.currentUserData = await db.getUsuario(session.user.id);
+            state.user = session.user;
+            state.userData = await API.getUsuario(session.user.id);
             await showDashboard();
         }
     } catch (error) {
-        console.error('Error en inicialización:', error);
+        console.error('Init error:', error);
     }
 }
 
-// Iniciar aplicación
 init();
-console.log('👕 CamiX v2.0 - Con gestión de miembros y perfiles');
+console.log('👕 CamiX cargado correctamente');

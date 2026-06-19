@@ -1,69 +1,8 @@
 /* ============================================
-   ESTILOS PRINCIPALES - CamiX
-   Paleta: Verdes, Cafés, Ámbar, Cremas
+   ESTILOS COMPLETOS - CamiX
    ============================================ */
 
-/* Importación de fuentes */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
-/* ============================================
-   VARIABLES DE COLORES CÁLIDOS
-   ============================================ */
-:root {
-    /* Colores principales - Verde natural */
-    --primary-50: #f0fdf4;
-    --primary-100: #dcfce7;
-    --primary-200: #bbf7d0;
-    --primary-300: #86efac;
-    --primary-400: #4ade80;
-    --primary-500: #22c55e;
-    --primary-600: #16a34a;
-    --primary-700: #15803d;
-    --primary-800: #166534;
-    --primary-900: #14532d;
-    
-    /* Colores cálidos - Café/Tierra */
-    --warm-50: #faf7f0;
-    --warm-100: #f0ebe0;
-    --warm-200: #e3d5c4;
-    --warm-300: #d4bfa8;
-    --warm-400: #c4a889;
-    --warm-500: #b3926c;
-    --warm-600: #9d7a54;
-    --warm-700: #82633f;
-    --warm-800: #674d2d;
-    --warm-900: #4d381f;
-    
-    /* Ámbar / Dorado */
-    --amber-400: #fbbf24;
-    --amber-500: #f59e0b;
-    --amber-600: #d97706;
-    
-    /* Background */
-    --bg-primary: #0c1a12;
-    --bg-secondary: #162a1e;
-    --bg-card: #1e3a2a;
-    --bg-input: #2a4a36;
-    
-    /* Texto */
-    --text-primary: #f0f7f2;
-    --text-secondary: #b8d4c0;
-    --text-muted: #7a9a82;
-    
-    /* Bordes */
-    --border-color: #2a4a36;
-    --border-hover: #4ade80;
-    
-    /* Sombras */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 30px rgba(34, 197, 94, 0.15);
-}
-
-/* ============================================
-   RESET Y BASE
-   ============================================ */
+/* Reset y base */
 * {
     margin: 0;
     padding: 0;
@@ -71,35 +10,26 @@
 }
 
 body {
+    background-color: #0c1a12;
+    color: #f0f7f2;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
     min-height: 100vh;
-    letter-spacing: -0.011em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
     background-image: 
         radial-gradient(ellipse at 20% 50%, rgba(34, 197, 94, 0.05) 0%, transparent 60%),
         radial-gradient(ellipse at 80% 20%, rgba(157, 122, 84, 0.05) 0%, transparent 50%);
 }
 
-/* ============================================
-   SCROLLBAR
-   ============================================ */
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-}
-::-webkit-scrollbar-thumb {
-    background: var(--warm-600);
-    border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--warm-500);
+#app {
+    width: 100%;
+    max-width: 800px;
 }
 
 /* ============================================
-   UTILIDADES
+   TIPOGRAFÍA
    ============================================ */
 .gradient-brand {
     background: linear-gradient(135deg, #4ade80 0%, #22c55e 40%, #16a34a 100%);
@@ -108,53 +38,75 @@ body {
     background-clip: text;
 }
 
-.gradient-warm {
-    background: linear-gradient(135deg, #d4bfa8 0%, #b3926c 50%, #82633f 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+/* ============================================
+   PANTALLAS
+   ============================================ */
+.screen {
+    display: none;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.screen.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ============================================
    CARDS
    ============================================ */
 .card-premium {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-md);
+    background-color: #1e3a2a;
+    border: 1px solid #2a4a36;
     border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
     transition: all 0.3s ease;
 }
 
 .card-premium:hover {
-    border-color: var(--primary-600);
-    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    border-color: #22c55e;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 30px rgba(34, 197, 94, 0.08);
+}
+
+.card-wide {
+    max-width: 800px;
 }
 
 /* ============================================
    INPUTS
    ============================================ */
 .input-premium {
-    background: var(--bg-input);
-    border: 1.5px solid var(--border-color);
-    color: var(--text-primary);
+    background-color: #2a4a36;
+    border: 1.5px solid #2a4a36;
+    color: #f0f7f2;
     padding: 12px 16px;
     border-radius: 12px;
-    transition: all 0.3s ease;
     width: 100%;
+    transition: all 0.3s ease;
     font-size: 0.9rem;
-}
-
-.input-premium::placeholder {
-    color: var(--text-muted);
 }
 
 .input-premium:focus {
     outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
-    background: var(--bg-input);
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.15);
+}
+
+.input-premium::placeholder {
+    color: #7a9a82;
 }
 
 .input-premium:disabled {
@@ -162,8 +114,12 @@ body {
     cursor: not-allowed;
 }
 
+textarea.input-premium {
+    resize: none;
+}
+
 /* ============================================
-   BUTTONS
+   BOTONES
    ============================================ */
 .btn-primary {
     background: linear-gradient(135deg, #4ade80 0%, #22c55e 60%, #16a34a 100%);
@@ -174,7 +130,6 @@ body {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.25);
     font-size: 0.9rem;
     display: inline-flex;
     align-items: center;
@@ -197,11 +152,11 @@ body {
 }
 
 .btn-secondary {
-    background: var(--bg-input);
-    color: var(--text-secondary);
+    background-color: #2a4a36;
+    color: #b8d4c0;
     font-weight: 500;
     padding: 12px 24px;
-    border: 1.5px solid var(--border-color);
+    border: 1.5px solid #2a4a36;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -213,45 +168,9 @@ body {
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: var(--warm-700);
-    border-color: var(--warm-500);
+    background-color: #3a5a46;
     color: white;
-    transform: translateY(-2px);
-}
-
-.btn-danger {
-    background: rgba(220, 38, 38, 0.15);
-    color: #f87171;
-    border: 1.5px solid rgba(220, 38, 38, 0.3);
-    padding: 8px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.btn-danger:hover {
-    background: rgba(220, 38, 38, 0.25);
-    border-color: #ef4444;
-    transform: scale(1.05);
-}
-
-.btn-warm {
-    background: linear-gradient(135deg, #d4bfa8 0%, #b3926c 100%);
-    color: #4d381f;
-    font-weight: 600;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.85rem;
-}
-
-.btn-warm:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(179, 146, 108, 0.3);
+    border-color: #3a5a46;
 }
 
 .btn-amber {
@@ -264,6 +183,10 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .btn-amber:hover {
@@ -271,62 +194,21 @@ body {
     box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
 }
 
-/* ============================================
-   T-SHIRT BUTTONS
-   ============================================ */
-.tshirt-btn {
-    background: var(--bg-input);
-    border: 2px solid var(--border-color);
-    padding: 16px 8px;
-    border-radius: 16px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text-secondary);
+.btn-danger {
+    background: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+    border: 1.5px solid rgba(220, 38, 38, 0.3);
+    padding: 6px 14px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 500;
 }
 
-.tshirt-btn:hover:not(:disabled) {
-    background: var(--warm-700);
-    border-color: var(--primary-500);
-    color: white;
-    transform: scale(1.05);
-    box-shadow: var(--shadow-glow);
-}
-
-.tshirt-btn:active:not(:disabled) {
-    transform: scale(0.95);
-}
-
-.tshirt-btn.selected-vote {
-    background: var(--primary-700);
-    border-color: var(--primary-400);
-    color: white;
-    box-shadow: 0 0 24px rgba(34, 197, 94, 0.3);
-}
-
-/* ============================================
-   SCREENS
-   ============================================ */
-.screen {
-    display: none;
-    animation: fadeIn 0.4s ease-out;
-}
-
-.screen.active {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.btn-danger:hover {
+    background: rgba(220, 38, 38, 0.25);
+    border-color: #ef4444;
 }
 
 /* ============================================
@@ -336,21 +218,16 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-600), var(--warm-600));
+    background: linear-gradient(135deg, #22c55e, #b3926c);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 1.2rem;
     color: white;
-    border: 2px solid var(--primary-400);
+    border: 2px solid #4ade80;
     object-fit: cover;
-    transition: all 0.3s ease;
-}
-
-.avatar:hover {
-    transform: scale(1.05);
-    border-color: var(--primary-300);
+    flex-shrink: 0;
 }
 
 .avatar-lg {
@@ -366,12 +243,106 @@ body {
     font-size: 0.8rem;
 }
 
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* ============================================
+   T-SHIRT BUTTONS
+   ============================================ */
+.tshirt-btn {
+    background-color: #2a4a36;
+    border: 2px solid #2a4a36;
+    padding: 16px 8px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #b8d4c0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.tshirt-btn:hover:not(:disabled) {
+    background-color: #3a5a46;
+    border-color: #4ade80;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+}
+
+.tshirt-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.tshirt-btn.selected-vote {
+    background-color: #166534;
+    border-color: #4ade80;
+    color: white;
+    box-shadow: 0 0 24px rgba(34, 197, 94, 0.3);
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-green {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+}
+
+.badge-amber {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+.badge-red {
+    background: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+}
+
+/* ============================================
+   MIEMBROS
+   ============================================ */
+.member-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #162a1e;
+    border-radius: 10px;
+    border: 1px solid #2a4a36;
+    transition: all 0.3s ease;
+}
+
+.member-item:hover {
+    border-color: #4ade80;
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 /* ============================================
    GENDER SELECTOR
    ============================================ */
 .gender-option {
-    background: var(--bg-input);
-    border: 2px solid var(--border-color);
+    background: #2a4a36;
+    border: 2px solid #2a4a36;
     padding: 12px;
     border-radius: 12px;
     text-align: center;
@@ -380,12 +351,12 @@ body {
 }
 
 .gender-option:hover {
-    border-color: var(--primary-500);
+    border-color: #4ade80;
 }
 
 .gender-option.selected {
-    border-color: var(--primary-400);
-    background: var(--primary-800);
+    border-color: #4ade80;
+    background: #166534;
     box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
 }
 
@@ -396,96 +367,68 @@ body {
 .gender-option span {
     font-size: 0.9rem;
     font-weight: 500;
+    color: #f0f7f2;
 }
 
 /* ============================================
-   BADGE / ETIQUETAS
+   STATUS BADGE
    ============================================ */
-.badge {
-    display: inline-block;
+.status-badge {
+    background: #1e3a2a;
+    border: 1px solid #2a4a36;
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.badge-green {
-    background: rgba(34, 197, 94, 0.15);
-    color: var(--primary-400);
-}
-
-.badge-amber {
-    background: rgba(245, 158, 11, 0.15);
-    color: var(--amber-400);
-}
-
-.badge-warm {
-    background: rgba(179, 146, 108, 0.15);
-    color: var(--warm-400);
 }
 
 /* ============================================
-   MEMBERS LIST
+   UTILIDADES
    ============================================ */
-.member-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: var(--bg-secondary);
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
+.hidden {
+    display: none !important;
 }
 
-.member-item:hover {
-    border-color: var(--warm-500);
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+    width: 6px;
 }
 
-.member-item .member-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+::-webkit-scrollbar-track {
+    background: #162a1e;
 }
 
-.member-item .member-role {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    background: var(--bg-input);
-    padding: 2px 10px;
-    border-radius: 12px;
+::-webkit-scrollbar-thumb {
+    background: #3a5a46;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4a6a56;
 }
 
 /* ============================================
    RESPONSIVE
    ============================================ */
-@media (max-width: 768px) {
-    .card-premium {
-        padding: 20px !important;
-    }
-    
-    .tshirt-btn {
-        padding: 12px 6px;
-        font-size: 0.9rem;
-    }
-    
-    .avatar-lg {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
-    }
-}
-
-@media (max-width: 480px) {
+@media (max-width: 640px) {
     .card-premium {
         padding: 16px !important;
         border-radius: 16px;
     }
     
-    .btn-primary, .btn-secondary {
+    .tshirt-btn {
+        padding: 12px 4px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
         padding: 10px 16px;
         font-size: 0.8rem;
+    }
+    
+    .grid-cols-2 {
+        grid-template-columns: 1fr !important;
     }
 }
