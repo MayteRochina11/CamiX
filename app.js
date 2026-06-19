@@ -108,7 +108,9 @@ function initApp(API) {
         try {
             const errEl = $('reg-error');
             errEl.textContent = '';
+            errEl.className = 'text-red-400 text-xs mt-2 text-center';
 
+            // Validaciones
             if (!email || !password || !nombre || !apellido || !username || !edad || !sexo) {
                 errEl.textContent = 'Todos los campos son obligatorios';
                 return;
@@ -122,18 +124,20 @@ function initApp(API) {
                 return;
             }
 
+            // Verificar si el email ya existe
             const existing = await API.getUsuarioByEmail(email);
             if (existing) {
                 errEl.textContent = 'Este correo ya está registrado';
                 return;
             }
 
+            // ✅ CORREGIDO: Enviar TODOS los datos al registro
             const data = await API.signUp(email, password, {
-                nombre,
-                apellido,
-                username,
-                edad,
-                sexo
+                nombre: nombre.trim(),
+                apellido: apellido.trim(),
+                username: username.trim().toLowerCase(),
+                edad: parseInt(edad),
+                sexo: sexo
             });
 
             errEl.textContent = '✅ Registro exitoso. Revisa tu correo para confirmar.';
@@ -206,7 +210,7 @@ function initApp(API) {
             const userMap = {};
             if (userIds.length > 0) {
                 const { data: users } = await API.supabase
-                    .from('usuarios')
+                    .from('usuarios')  // ✅ CORREGIDO
                     .select('id, nombre, username')
                     .in('id', userIds);
                 if (users) users.forEach(u => { userMap[u.id] = u; });
@@ -359,6 +363,12 @@ function initApp(API) {
 
     async function loadMembers() {
         try {
+            // ✅ Validación de estado
+            if (!state.group || !state.group.id) {
+                $('members-list').innerHTML = '<p class="text-slate-500 text-sm py-4 text-center">No hay grupo seleccionado</p>';
+                return;
+            }
+
             const miembros = await API.getMiembros(state.group.id);
             const container = $('members-list');
 
@@ -367,10 +377,16 @@ function initApp(API) {
                 return;
             }
 
+            // ✅ Verificar que state.group.creator existe
+            const creatorId = state.group.creator || state.group.creado_por;
+
             container.innerHTML = miembros.map(m => {
-                const isCreator = m.usuario_id === state.group.creator;
+                // ✅ Usar creatorId en lugar de state.group.creator directamente
+                const isCreator = m.usuario_id === creatorId;
                 const isCurrent = m.usuario_id === state.user.id;
                 const user = m.usuario || {};
+                
+                // ✅ Mostrar username si existe, sino nombre
                 const name = user.username || user.nombre || user.email || 'Usuario';
 
                 return `

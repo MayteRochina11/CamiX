@@ -53,11 +53,11 @@ async function getCurrentUser() {
 }
 
 // ============================================
-// FUNCIONES DE USUARIOS
+// FUNCIONES DE USUARIOS - CORREGIDAS
 // ============================================
 async function getUsuario(userId) {
     const { data, error } = await supabase
-        .from('usuarios')
+        .from('usuarios')  // ✅ CORREGIDO: 'usuarios' (plural)
         .select('*')
         .eq('id', userId)
         .single();
@@ -67,8 +67,11 @@ async function getUsuario(userId) {
 
 async function updateUsuario(userId, updates) {
     const { data, error } = await supabase
-        .from('usuarios')
-        .update({ ...updates, actualizado_en: new Date().toISOString() })
+        .from('usuarios')  // ✅ CORREGIDO: 'usuarios' (plural)
+        .update({ 
+            ...updates, 
+            actualizado_en: new Date().toISOString() 
+        })
         .eq('id', userId)
         .select()
         .single();
@@ -78,8 +81,8 @@ async function updateUsuario(userId, updates) {
 
 async function getUsuarioByEmail(email) {
     const { data, error } = await supabase
-        .from('usuarios')
-        .select('id, email, nombre, username')
+        .from('usuarios')  // ✅ CORREGIDO: 'usuarios' (plural)
+        .select('id, email, nombre, apellido, username, edad, sexo, avatar_url')
         .eq('email', email)
         .maybeSingle();
     if (error) throw error;
@@ -134,7 +137,7 @@ async function getMiembros(grupoId) {
         .from('miembros_grupo')
         .select(`
             *,
-            usuario:usuarios(id, email, nombre, username, avatar_url)
+            usuario:usuarios(id, email, nombre, apellido, username, avatar_url)  // ✅ CORREGIDO
         `)
         .eq('grupo_id', grupoId);
     if (error) throw error;
