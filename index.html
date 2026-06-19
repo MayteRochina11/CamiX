@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>👕 CamiX - T-Shirt Sizing</title>
+    
+    <!-- Tailwind CSS + Fuentes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'pulse-soft': 'pulseSoft 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        pulseSoft: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.7' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Estilos base y personalizaciones sobre Tailwind */
+        body {
+            background-color: #020617; /* slate-950 */
+            color: #f1f5f9; /* slate-100 */
+            letter-spacing: -0.011em;
+        }
+        
+        .gradient-brand {
+            background: linear-gradient(135deg, #34d399 0%, #14b8a6 50%, #0d9488 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card-premium {
+            background-color: #0f172a; /* slate-900 */
+            border: 1px solid #1e293b; /* slate-800 */
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5), 0 4px 8px -2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .input-premium {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #334155; /* slate-700 */
+            transition: all 0.2s ease;
+        }
+        .input-premium:focus {
+            outline: none;
+            border-color: #34d399; /* emerald-400 */
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
+            background-color: #1e293b;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            color: #022c22;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2), 0 2px 4px -1px rgba(5, 150, 105, 0.1);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3), 0 4px 6px -2px rgba(5, 150, 105, 0.15);
+        }
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px -1px rgba(5, 150, 105, 0.2);
+        }
+        
+        .btn-secondary {
+            background-color: #334155; /* slate-700 */
+            color: #e2e8f0;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #475569; /* slate-600 */
+            transform: translateY(-1px);
+        }
+        
+        .btn-amber-action {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #78350f;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-amber-action:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+        }
+        
+        .tshirt-btn {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            transition: all 0.2s ease;
+            font-weight: 700;
+            color: #cbd5e1;
+        }
+        .tshirt-btn:hover:not(:disabled) {
+            background-color: #334155;
+            border-color: #34d399;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.15);
+        }
+        .tshirt-btn:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+        .tshirt-btn.selected-vote {
+            background-color: #065f46;
+            border-color: #34d399;
+            color: white;
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+        }
+        
+        .status-badge {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+        }
+        
+        /* Ocultar pantallas por defecto */
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Scroll personalizado */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased">
+
+    <!-- Contenedor principal de la SPA -->
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <!-- ==================== PANTALLA 1: AUTENTICACIÓN ==================== -->
+        <div id="auth-screen" class="screen active w-full max-w-md mx-auto animate-fade-in">
+            <div class="card-premium rounded-2xl p-8 w-full">
+                <div class="text-center mb-8">
+                    <h1 class="text-5xl font-black tracking-tight mb-2">
+                        <span class="gradient-brand">👕 CamiX</span>
+                    </h1>
+                    <p class="text-slate-400 text-sm font-medium mt-2">T-Shirt Sizing para equipos ágiles</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                        <input type="email" id="auth-email" placeholder="tu@equipo.com" 
+                               class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+                        <input type="password" id="auth-password" placeholder="••••••••" 
+                               class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                    </div>
+                    
+                    <div class="pt-2 flex gap-3">
+                        <button id="btn-login" 
+                                class="btn-primary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
+                            Entrar
+                        </button>
+                        <button id="btn-register" 
+                                class="btn-secondary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
+                            Registrarse
+                        </button>
+                    </div>
+                    <p id="auth-error" class="text-red-400 text-xs mt-2 min-h-[16px] text-center"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PANTALLA 2: DASHBOARD DE GRUPOS ==================== -->
+        <div id="dashboard-screen" class="screen w-full max-w-2xl mx-auto">
+            <div class="card-premium rounded-2xl p-6 md:p-8 animate-slide-up">
+                <!-- Cabecera -->
+                <div class="flex justify-between items-center mb-8 border-b border-slate-800 pb-5">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight">
+                            <span class="gradient-brand">👕 CamiX</span>
+                        </h2>
+                        <p class="text-slate-400 text-xs mt-1" id="dashboard-user-email">usuario@correo.com</p>
+                    </div>
+                    <button id="btn-logout" 
+                            class="text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors flex items-center gap-1.5 bg-slate-800/50 px-3 py-1.5 rounded-lg hover:bg-slate-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+                        </svg>
+                        Salir
+                    </button>
+                </div>
+
+                <!-- Crear grupo -->
+                <div class="mb-8 p-5 bg-slate-800/30 rounded-xl border border-slate-800/60">
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">Crear nuevo grupo de trabajo</h3>
+                    <div class="flex gap-3">
+                        <input type="text" id="new-group-name" placeholder="Nombre del proyecto o sala..." 
+                               class="input-premium flex-1 px-4 py-2.5 rounded-xl text-sm placeholder-slate-500">
+                        <button id="btn-create-group" 
+                                class="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5">
+                            <span class="text-lg leading-none">+</span> Crear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de grupos -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">Tus Grupos de Trabajo</h3>
+                    <div id="groups-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        <p class="text-slate-500 text-xs py-4 text-center">Cargando grupos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PANTALLA 3: SALA DE ESTIMACIÓN ==================== -->
+        <div id="room-screen" class="screen w-full max-w-4xl mx-auto">
+            <div class="card-premium rounded-2xl p-5 md:p-7 animate-slide-up">
+                <!-- Barra superior -->
+                <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                    <button id="btn-back-dashboard" 
+                            class="text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors flex items-center gap-1 bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Volver
+                    </button>
+                    <h2 id="room-title" class="text-xl font-bold text-slate-200 truncate max-w-[60%]">Sala de Estimación</h2>
+                    <div class="w-20"></div> <!-- Espaciador -->
+                </div>
+
+                <!-- Panel del Facilitador (oculto por defecto) -->
+                <div id="facilitator-panel" class="mb-6 p-5 bg-slate-800/30 rounded-xl border border-slate-800/60 hidden">
+                    <h3 class="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <span>⚡</span> Panel de Facilitador
+                    </h3>
+                    <div class="flex flex-wrap gap-3 items-end">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs text-slate-400 mb-1">Nombre de la tarea</label>
+                            <input type="text" id="task-name-input" placeholder="Ej: Implementar pasarela de pago" 
+                                   class="input-premium w-full px-4 py-2.5 rounded-xl text-sm placeholder-slate-500">
+                        </div>
+                        <button id="btn-launch-voting" 
+                                class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20">
+                            🚀 Lanzar Votación
+                        </button>
+                        <button id="btn-reveal-votes" 
+                                class="btn-amber-action px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5">
+                            👁️ Revelar Votos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estado actual de votación -->
+                <div id="current-task-box" class="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700 text-center">
+                    <p class="text-slate-400 text-xs uppercase tracking-wider">Tarea en estimación</p>
+                    <p id="current-task-name" class="text-2xl font-bold text-white mt-1">—</p>
+                </div>
+
+                <!-- Teclado de Camisetas -->
+                <div class="mb-7">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 text-center">Tu voto</p>
+                    <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        <button data-size="XS" class="tshirt-btn py-4 px-2 rounded-2xl text-lg font-bold transition-all">XS</button>
+                        <button data-size="S" class="tshirt-btn py-4 px-2 rounded-2xl text-lg font-bold transition-all">S</button>
+                        <button data-size="M" class="tshirt-btn py-4 px-2 rounded-2xl text-lg font-bold transition-all">M</button>
+                        <button data-size="L" class="tshirt-btn py-4 px-2 rounded-2xl text-lg font-bold transition-all">L</button>
+                        <button data-size="XL" class="tshirt-btn py-4 px-2 rounded-2xl text-lg font-bold transition-all">XL</button>
+                        <button data-size="XXL" class="tshirt-btn py-4 px-2 rounded-2xl text-lg font-bold transition-all">XXL</button>
+                    </div>
+                </div>
+
+                <!-- Estado del equipo -->
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Estatus del Equipo</h3>
+                    <div id="team-status-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <p class="text-slate-500 text-xs py-3 text-center">Esperando participantes...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // ==================== CONFIGURACIÓN GLOBAL DE SUPABASE ====================
+        const SUPABASE_URL = 'https://uwxkdkxwonukadjwwuok.supabase.co'; // REEMPLAZAR CON TU URL REAL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3eGtka3h3b251a2Fkand3dW9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MTY1MTksImV4cCI6MjA5NzM5MjUxOX0.Cnp-mD-nQM1isECFf2r4RvR2Z6m03ynO5moMMb_1gwY'; // REEMPLAZAR CON TU KEY REAL
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ==================== ESTADO GLOBAL DE LA APLICACIÓN ====================
+        const state = {
+        session: null,
+        currentUser: null,
+        currentGroup: null,
+        currentSessionId: null,
+        isFacilitator: false,
+        votesRevealed: false,
+        realtimeChannels: []
+        };
+
+        // ==================== ELEMENTOS DEL DOM ====================
+        const screens = {
+            auth: document.getElementById('auth-screen'),
+            dashboard: document.getElementById('dashboard-screen'),
+            room: document.getElementById('room-screen')
+        };
+
+        // Auth elements
+        const authEmail = document.getElementById('auth-email');
+        const authPassword = document.getElementById('auth-password');
+        const authError = document.getElementById('auth-error');
+        const btnLogin = document.getElementById('btn-login');
+        const btnRegister = document.getElementById('btn-register');
+        const dashboardUserEmail = document.getElementById('dashboard-user-email');
+        const btnLogout = document.getElementById('btn-logout');
+
+        // Dashboard elements
+        const newGroupName = document.getElementById('new-group-name');
+        const btnCreateGroup = document.getElementById('btn-create-group');
+        const groupsList = document.getElementById('groups-list');
+
+        // Room elements
+        const roomTitle = document.getElementById('room-title');
+        const btnBackDashboard = document.getElementById('btn-back-dashboard');
+        const facilitatorPanel = document.getElementById('facilitator-panel');
+        const taskNameInput = document.getElementById('task-name-input');
+        const btnLaunchVoting = document.getElementById('btn-launch-voting');
+        const btnRevealVotes = document.getElementById('btn-reveal-votes');
+        const currentTaskName = document.getElementById('current-task-name');
+        const teamStatusList = document.getElementById('team-status-list');
+        const tshirtButtons = document.querySelectorAll('[data-size]');
+
+        // ==================== NAVEGACIÓN ENTRE PANTALLAS ====================
+        function showScreen(screenName) {
+            Object.keys(screens).forEach(key => {
+                screens[key].classList.remove('active');
+            });
+            if (screens[screenName]) {
+                screens[screenName].classList.add('active');
+            }
+        }
+
+        // ==================== LIMPIEZA DE CANALES EN TIEMPO REAL ====================
+        function cleanupChannels() {
+            state.realtimeChannels.forEach(channel => {
+                supabase.removeChannel(channel);
+            });
+            state.realtimeChannels = [];
+        }
+
+        // ==================== AUTENTICACIÓN ====================
+        async function handleAuth(email, password, isRegister = false) {
+            try {
+                authError.textContent = '';
+                let response;
+                
+                if (isRegister) {
+                    response = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                    });
+                    if (response.error) throw response.error;
+                    if (response.data?.user?.identities?.length === 0) {
+                        throw new Error('Este correo ya está registrado. Por favor inicia sesión.');
+                    }
+                    authError.textContent = 'Registro exitoso. Revisa tu correo para confirmar.';
+                    authError.classList.remove('text-red-400');
+                    authError.classList.add('text-emerald-400');
+                    return;
+                } else {
+                    response = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+                    if (response.error) throw response.error;
+                }
+                
+                state.session = response.data.session;
+                state.currentUser = response.data.user;
+                showDashboard();
+                
+            } catch (error) {
+                authError.textContent = error.message || 'Error de autenticación';
+                authError.classList.add('text-red-400');
+                authError.classList.remove('text-emerald-400');
+            }
+        }
+
+        async function signOut() {
+            cleanupChannels();
+            await supabase.auth.signOut();
+            state.session = null;
+            state.currentUser = null;
+            state.currentGroup = null;
+            showScreen('auth');
+        }
+
+        // ==================== DASHBOARD ====================
+        async function showDashboard() {
+            if (!state.currentUser) return;
+            showScreen('dashboard');
+            dashboardUserEmail.textContent = state.currentUser.email;
+            await loadGroups();
+        }
+
+        async function loadGroups() {
+            try {
+                const { data, error } = await supabase
+                    .from('grupos')
+                    .select('*')
+                    .order('creado_en', { ascending: false });
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    groupsList.innerHTML = '<p class="text-slate-500 text-xs py-4 text-center">No hay grupos aún. ¡Crea el primero!</p>';
+                    return;
+                }
+                
+                // Obtener emails de los creadores
+                const creatorIds = [...new Set(data.map(g => g.creado_por).filter(Boolean))];
+                const { data: users } = await supabase.auth.admin?.listUsers() || { data: [] };
+                const userMap = {};
+                if (users) {
+                    users.forEach(u => { userMap[u.id] = u.email; });
+                }
+                
+                groupsList.innerHTML = data.map(group => {
+                    const creatorEmail = group.creado_por === state.currentUser.id ? 'Tú' : (userMap[group.creado_por] || 'Usuario');
+                    return `
+                        <div class="flex justify-between items-center p-3 bg-slate-800/40 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-colors">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-200">${escapeHtml(group.nombre)}</p>
+                                <p class="text-xs text-slate-500">Creado por: ${escapeHtml(creatorEmail)}</p>
+                            </div>
+                            <button data-group-id="${group.id}" data-group-name="${escapeHtml(group.nombre)}" data-creator="${group.creado_por || ''}"
+                                    class="btn-enter-room bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all border border-emerald-600/30">
+                                Entrar
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Asignar eventos a botones de entrar
+                document.querySelectorAll('.btn-enter-room').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const groupId = btn.dataset.groupId;
+                        const groupName = btn.dataset.groupName;
+                        const creator = btn.dataset.creator;
+                        await enterRoom(groupId, groupName, creator);
+                    });
+                });
+                
+            } catch (error) {
+                groupsList.innerHTML = `<p class="text-red-400 text-xs py-4 text-center">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function createGroup(name) {
+            if (!name.trim()) return;
+            try {
+                const { error } = await supabase
+                    .from('grupos')
+                    .insert([{ 
+                        nombre: name.trim(),
+                        creado_por: state.currentUser.id
+                    }]);
+                    
+                if (error) throw error;
+                newGroupName.value = '';
+                await loadGroups();
+            } catch (error) {
+                alert('Error al crear grupo: ' + error.message);
+            }
+        }
+
+        // ==================== SALA DE ESTIMACIÓN ====================
+        async function enterRoom(groupId, groupName, creatorId) {
+            cleanupChannels();
+            state.currentGroup = { id: groupId, name: groupName, creator: creatorId };
+            state.isFacilitator = (creatorId === state.currentUser.id);
+            state.currentSessionId = null;
+            state.votesRevealed = false;
+            
+            roomTitle.textContent = groupName;
+            showScreen('room');
+            
+            // Mostrar/ocultar panel de facilitador
+            if (state.isFacilitator) {
+                facilitatorPanel.classList.remove('hidden');
+            } else {
+                facilitatorPanel.classList.add('hidden');
+            }
+            
+            // Resetear UI
+            taskNameInput.value = '';
+            currentTaskName.textContent = '—';
+            teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Cargando estado...</p>';
+            resetTshirtButtons();
+            
+            // Cargar sesión activa si existe
+            await loadActiveSession(groupId);
+            
+            // Suscribirse a cambios en tiempo real
+            subscribeToRoomUpdates(groupId);
+        }
+
+        async function loadActiveSession(groupId) {
+            try {
+                const { data, error } = await supabase
+                    .from('sesiones')
+                    .select('*')
+                    .eq('grupo_id', groupId)
+                    .eq('estado', 'votando')
+                    .order('creada_en', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+                
+                if (data) {
+                    state.currentSessionId = data.id;
+                    currentTaskName.textContent = data.nombre_tarea;
+                    state.votesRevealed = data.estado === 'revelado';
+                    await loadTeamStatus();
+                } else {
+                    state.currentSessionId = null;
+                    currentTaskName.textContent = '—';
+                    teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando nueva votación...</p>';
+                }
+            } catch (error) {
+                console.error('Error loading session:', error);
+            }
+        }
+
+        async function launchVoting() {
+            const taskName = taskNameInput.value.trim();
+            if (!taskName) {
+                alert('Escribe el nombre de la tarea');
+                return;
+            }
+            if (!state.currentGroup) return;
+            
+            try {
+                // Finalizar sesiones anteriores
+                await supabase
+                    .from('sesiones')
+                    .update({ estado: 'revelado' })
+                    .eq('grupo_id', state.currentGroup.id)
+                    .eq('estado', 'votando');
+                
+                // Crear nueva sesión
+                const { data, error } = await supabase
+                    .from('sesiones')
+                    .insert([{
+                        grupo_id: state.currentGroup.id,
+                        nombre_tarea: taskName,
+                        estado: 'votando'
+                    }])
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                state.currentSessionId = data.id;
+                state.votesRevealed = false;
+                currentTaskName.textContent = taskName;
+                taskNameInput.value = '';
+                resetTshirtButtons();
+                await loadTeamStatus();
+                
+            } catch (error) {
+                alert('Error al lanzar votación: ' + error.message);
+            }
+        }
+
+        async function castVote(size) {
+            if (!state.currentSessionId || !state.currentUser) {
+                alert('No hay votación activa');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('votos')
+                    .upsert({
+                        sesion_id: state.currentSessionId,
+                        usuario_id: state.currentUser.id,
+                        nombre_usuario: state.currentUser.email,
+                        talla: size
+                    }, { 
+                        onConflict: 'sesion_id, usuario_id' 
+                    });
+                
+                if (error) throw error;
+                
+                // Actualizar UI local
+                highlightSelectedSize(size);
+                
+            } catch (error) {
+                alert('Error al votar: ' + error.message);
+            }
+        }
+
+        async function revealVotes() {
+            if (!state.currentSessionId) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('sesiones')
+                    .update({ estado: 'revelado' })
+                    .eq('id', state.currentSessionId);
+                
+                if (error) throw error;
+                
+                state.votesRevealed = true;
+                await loadTeamStatus();
+                
+            } catch (error) {
+                alert('Error al revelar votos: ' + error.message);
+            }
+        }
+
+        async function loadTeamStatus() {
+            if (!state.currentSessionId) {
+                teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Sin votación activa</p>';
+                return;
+            }
+            
+            try {
+                // Obtener votos de la sesión actual
+                const { data: votes, error } = await supabase
+                    .from('votos')
+                    .select('*')
+                    .eq('sesion_id', state.currentSessionId);
+                
+                if (error) throw error;
+                
+                const votesMap = {};
+                if (votes) {
+                    votes.forEach(v => {
+                        votesMap[v.usuario_id] = { talla: v.talla, nombre: v.nombre_usuario };
+                    });
+                }
+                
+                // Obtener todos los participantes únicos
+                const participants = new Map();
+                if (votes) {
+                    votes.forEach(v => {
+                        participants.set(v.usuario_id, v.nombre_usuario);
+                    });
+                }
+                // Agregar al creador del grupo si no está
+                if (state.currentGroup?.creator && !participants.has(state.currentGroup.creator)) {
+                    const { data: creatorData } = await supabase.auth.admin?.getUserById(state.currentGroup.creator);
+                    participants.set(state.currentGroup.creator, creatorData?.user?.email || 'Facilitador');
+                }
+                
+                if (participants.size === 0) {
+                    teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando participantes...</p>';
+                    return;
+                }
+                
+                teamStatusList.innerHTML = Array.from(participants.entries()).map(([userId, userName]) => {
+                    const hasVoted = votesMap[userId] !== undefined;
+                    const voteDisplay = state.votesRevealed && hasVoted ? votesMap[userId].talla : (hasVoted ? '✓ Listo' : '⏳ Pendiente');
+                    const isCurrentUser = userId === state.currentUser.id;
+                    
+                    return `
+                        <div class="flex justify-between items-center p-2.5 bg-slate-800/40 rounded-lg ${isCurrentUser ? 'border border-emerald-600/30' : ''}">
+                            <span class="text-sm text-slate-300 flex items-center gap-2">
+                                ${isCurrentUser ? '<span class="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>' : ''}
+                                ${escapeHtml(userName)}
+                            </span>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full status-badge
+                                ${hasVoted ? 'text-emerald-400 bg-emerald-400/10' : 'text-slate-400 bg-slate-700/50'}">
+                                ${voteDisplay}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading team status:', error);
+            }
+        }
+
+        function highlightSelectedSize(size) {
+            tshirtButtons.forEach(btn => {
+                if (btn.dataset.size === size) {
+                    btn.classList.add('selected-vote');
+                } else {
+                    btn.classList.remove('selected-vote');
+                }
+            });
+        }
+
+        function resetTshirtButtons() {
+            tshirtButtons.forEach(btn => btn.classList.remove('selected-vote'));
+        }
+
+        // ==================== TIEMPO REAL (SUPABASE CHANNELS) ====================
+        function subscribeToRoomUpdates(groupId) {
+            cleanupChannels();
+            
+            // Canal para sesiones
+            const sessionChannel = supabase
+                .channel(`sesiones-grupo-${groupId}`)
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'sesiones', filter: `grupo_id=eq.${groupId}` },
+                    async (payload) => {
+                        console.log('Cambio en sesiones:', payload);
+                        await loadActiveSession(groupId);
+                    }
+                )
+                .subscribe();
+            
+            state.realtimeChannels.push(sessionChannel);
+            
+            // Canal para votos (requiere conocer el sessionId actual)
+            if (state.currentSessionId) {
+                subscribeToVotesChannel(state.currentSessionId);
+            }
+        }
+
+        function subscribeToVotesChannel(sessionId) {
+            const votesChannel = supabase
+                .channel(`votos-sesion-${sessionId}`)
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'votos', filter: `sesion_id=eq.${sessionId}` },
+                    async (payload) => {
+                        console.log('Cambio en votos:', payload);
+                        await loadTeamStatus();
+                    }
+                )
+                .subscribe();
+            
+            state.realtimeChannels.push(votesChannel);
+        }
+
+        // ==================== UTILIDADES ====================
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        // Auth
+        btnLogin.addEventListener('click', () => {
+            handleAuth(authEmail.value, authPassword.value, false);
+        });
+        btnRegister.addEventListener('click', () => {
+            handleAuth(authEmail.value, authPassword.value, true);
+        });
+        btnLogout.addEventListener('click', signOut);
+
+        // Dashboard
+        btnCreateGroup.addEventListener('click', () => createGroup(newGroupName.value));
+        newGroupName.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createGroup(newGroupName.value);
+        });
+
+        // Room navigation
+        btnBackDashboard.addEventListener('click', () => {
+            cleanupChannels();
+            showDashboard();
+        });
+
+        // Facilitator actions
+        btnLaunchVoting.addEventListener('click', launchVoting);
+        btnRevealVotes.addEventListener('click', revealVotes);
+
+        // T-Shirt voting
+        tshirtButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const size = btn.dataset.size;
+                castVote(size);
+            });
+        });
+
+        // ==================== INICIALIZACIÓN ====================
+        async function checkInitialSession() {
+            const { data } = await supabase.auth.getSession();
+            if (data?.session) {
+                state.session = data.session;
+                state.currentUser = data.session.user;
+                showDashboard();
+            }
+        }
+
+        // Ejecutar al cargar
+        checkInitialSession();
+
+    console.log('👕 CamiX inicializado correctamente con tu estructura de base de datos');
+    </script>
+</body>
+</html>
