@@ -715,6 +715,9 @@
     // Inicializar Supabase
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('✅ Supabase cliente inicializado');
+    
+    let grupoActualId = null;
+    let historialListener = null;
 
     // ============================================
     // FUNCIONES DE AUTENTICACIÓN
