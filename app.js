@@ -4,18 +4,33 @@
 
 // Función para esperar a que SupabaseAPI esté disponible
 function waitForSupabaseAPI(callback, attempts = 0) {
-    const maxAttempts = 20;
-    const delay = 200;
+    const maxAttempts = 30;  // 30 intentos
+    const delay = 200;       // 200ms entre intentos
     
+    // Si SupabaseAPI ya está disponible, iniciar
     if (typeof window.SupabaseAPI !== 'undefined') {
         console.log('✅ SupabaseAPI encontrado');
         callback(window.SupabaseAPI);
         return;
     }
     
+    // Si ya pasaron muchos intentos, mostrar error
     if (attempts >= maxAttempts) {
         console.error('❌ No se pudo cargar SupabaseAPI después de', maxAttempts, 'intentos');
-        document.querySelector('.card-premium').innerHTML = `
+        showError();
+        return;
+    }
+    
+    // Esperar y reintentar
+    console.log(`⏳ Esperando SupabaseAPI... (intento ${attempts + 1}/${maxAttempts})`);
+    setTimeout(() => waitForSupabaseAPI(callback, attempts + 1), delay);
+}
+
+// Función para mostrar error
+function showError() {
+    const card = document.querySelector('.card-premium');
+    if (card) {
+        card.innerHTML = `
             <div class="text-center py-8">
                 <h2 class="text-red-400 text-xl font-bold">Error de carga</h2>
                 <p class="text-slate-400 mt-2">No se pudo cargar la configuración de Supabase</p>
@@ -23,23 +38,121 @@ function waitForSupabaseAPI(callback, attempts = 0) {
                 <button onclick="location.reload()" class="btn-primary mt-4">Recargar</button>
             </div>
         `;
-        return;
     }
-    
-    console.log(`⏳ Esperando SupabaseAPI... (intento ${attempts + 1}/${maxAttempts})`);
-    setTimeout(() => waitForSupabaseAPI(callback, attempts + 1), delay);
 }
 
 // Esperar a que el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Iniciando CamiX...');
     
+    // Mostrar mensaje de carga
+    const card = document.querySelector('.card-premium');
+    if (card) {
+        card.innerHTML = `
+            <div class="text-center py-8">
+                <h2 class="text-emerald-400 text-xl font-bold">🔄 Cargando...</h2>
+                <p class="text-slate-400 mt-2">Conectando con Supabase</p>
+                <div class="mt-4 flex justify-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+                </div>
+            </div>
+        `;
+    }
+    
     // Esperar a que SupabaseAPI esté disponible
     waitForSupabaseAPI(function(API) {
         console.log('✅ API cargada, iniciando aplicación...');
+        // Restaurar el contenido original de la card
+        restoreCard();
         initApp(API);
     });
 });
+
+// Función para restaurar la card original
+function restoreCard() {
+    const card = document.querySelector('.card-premium');
+    if (card) {
+        card.innerHTML = `
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-black tracking-tight mb-2">
+                    <span class="gradient-brand">👕 CamiX</span>
+                </h1>
+                <p class="text-slate-400 text-sm">T-Shirt Sizing para equipos ágiles</p>
+            </div>
+            
+            <!-- Login -->
+            <div id="login-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                        <input type="email" id="auth-email" placeholder="tu@equipo.com" class="input-premium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+                        <input type="password" id="auth-password" placeholder="••••••••" class="input-premium">
+                    </div>
+                    <div class="pt-2 flex gap-3">
+                        <button id="btn-login" class="btn-primary flex-1">Entrar</button>
+                        <button id="btn-show-register" class="btn-secondary flex-1">Registrarse</button>
+                    </div>
+                    <p id="auth-error" class="text-red-400 text-xs mt-2 text-center"></p>
+                </div>
+            </div>
+
+            <!-- Registro -->
+            <div id="register-form" class="hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                        <input type="email" id="reg-email" placeholder="tu@equipo.com" class="input-premium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+                        <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" class="input-premium">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Nombre</label>
+                            <input type="text" id="reg-nombre" placeholder="Nombre" class="input-premium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Apellido</label>
+                            <input type="text" id="reg-apellido" placeholder="Apellido" class="input-premium">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Nombre de Usuario</label>
+                        <input type="text" id="reg-username" placeholder="usuario_creativo" class="input-premium">
+                        <p class="text-xs text-slate-500 mt-1">Tu identificador único</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Edad</label>
+                        <input type="number" id="reg-edad" placeholder="Tu edad" min="1" max="120" class="input-premium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sexo</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="gender-option" data-gender="masculino">
+                                <input type="radio" name="gender" value="masculino">
+                                <span> Masculino</span>
+                            </label>
+                            <label class="gender-option" data-gender="femenino">
+                                <input type="radio" name="gender" value="femenino">
+                                <span> Femenino</span>
+                            </label>
+                        </div>
+                        <p id="reg-gender-error" class="text-red-400 text-xs mt-1 hidden">Selecciona tu sexo</p>
+                    </div>
+                    <div class="pt-2 flex gap-3">
+                        <button id="btn-register" class="btn-primary flex-1">Crear Cuenta</button>
+                        <button id="btn-back-login" class="btn-secondary flex-1">Volver</button>
+                    </div>
+                    <p id="reg-error" class="text-red-400 text-xs mt-2 text-center"></p>
+                </div>
+            </div>
+        `;
+    }
+}
 
 // ============================================
 // FUNCIÓN PRINCIPAL DE LA APP
@@ -110,41 +223,44 @@ function initApp(API) {
     async function handleLogin(email, password) {
         try {
             const errEl = $('auth-error');
-            errEl.textContent = '';
+            if (errEl) errEl.textContent = '';
             
             const data = await API.signIn(email, password);
             state.user = data.user;
             state.userData = await API.getUsuario(data.user.id);
             await showDashboard();
         } catch (error) {
-            $('auth-error').textContent = error.message;
+            const errEl = $('auth-error');
+            if (errEl) errEl.textContent = error.message;
         }
     }
 
     async function handleRegister(email, password, nombre, apellido, username, edad, sexo) {
         try {
             const errEl = $('reg-error');
-            errEl.textContent = '';
-            errEl.className = 'text-red-400 text-xs mt-2 text-center';
+            if (errEl) {
+                errEl.textContent = '';
+                errEl.className = 'text-red-400 text-xs mt-2 text-center';
+            }
 
             // Validaciones
             if (!email || !password || !nombre || !apellido || !username || !edad || !sexo) {
-                errEl.textContent = 'Todos los campos son obligatorios';
+                if (errEl) errEl.textContent = 'Todos los campos son obligatorios';
                 return;
             }
             if (password.length < 6) {
-                errEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                if (errEl) errEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
                 return;
             }
             if (edad < 1 || edad > 120) {
-                errEl.textContent = 'Edad no válida';
+                if (errEl) errEl.textContent = 'Edad no válida';
                 return;
             }
 
             // Verificar si el email ya existe
             const existing = await API.getUsuarioByEmail(email);
             if (existing) {
-                errEl.textContent = 'Este correo ya está registrado';
+                if (errEl) errEl.textContent = 'Este correo ya está registrado';
                 return;
             }
 
@@ -157,27 +273,38 @@ function initApp(API) {
                 sexo: sexo
             });
 
-            errEl.textContent = '✅ Registro exitoso. Revisa tu correo para confirmar.';
-            errEl.className = 'text-emerald-400 text-xs mt-2 text-center';
+            if (errEl) {
+                errEl.textContent = '✅ Registro exitoso. Revisa tu correo para confirmar.';
+                errEl.className = 'text-emerald-400 text-xs mt-2 text-center';
+            }
 
             // Limpiar formulario
-            $('reg-email').value = '';
-            $('reg-password').value = '';
-            $('reg-nombre').value = '';
-            $('reg-apellido').value = '';
-            $('reg-username').value = '';
-            $('reg-edad').value = '';
+            const regEmail = $('reg-email');
+            const regPassword = $('reg-password');
+            const regNombre = $('reg-nombre');
+            const regApellido = $('reg-apellido');
+            const regUsername = $('reg-username');
+            const regEdad = $('reg-edad');
+            
+            if (regEmail) regEmail.value = '';
+            if (regPassword) regPassword.value = '';
+            if (regNombre) regNombre.value = '';
+            if (regApellido) regApellido.value = '';
+            if (regUsername) regUsername.value = '';
+            if (regEdad) regEdad.value = '';
             $$('.gender-option').forEach(el => el.classList.remove('selected'));
 
             setTimeout(() => {
                 toggleForms(false);
-                errEl.textContent = '';
+                if (errEl) errEl.textContent = '';
             }, 3000);
 
         } catch (error) {
             const errEl = $('reg-error');
-            errEl.textContent = error.message;
-            errEl.className = 'text-red-400 text-xs mt-2 text-center';
+            if (errEl) {
+                errEl.textContent = error.message;
+                errEl.className = 'text-red-400 text-xs mt-2 text-center';
+            }
         }
     }
 
@@ -191,10 +318,15 @@ function initApp(API) {
     }
 
     function toggleForms(showRegister) {
-        $('login-form').classList.toggle('hidden', showRegister);
-        $('register-form').classList.toggle('hidden', !showRegister);
-        $('auth-error').textContent = '';
-        $('reg-error').textContent = '';
+        const loginForm = $('login-form');
+        const registerForm = $('register-form');
+        const authError = $('auth-error');
+        const regError = $('reg-error');
+        
+        if (loginForm) loginForm.classList.toggle('hidden', showRegister);
+        if (registerForm) registerForm.classList.toggle('hidden', !showRegister);
+        if (authError) authError.textContent = '';
+        if (regError) regError.textContent = '';
     }
 
     // ============================================
@@ -204,9 +336,12 @@ function initApp(API) {
         if (!state.user) return;
         showScreen('dashboard');
 
-        $('dashboard-user-email').textContent = state.user.email;
+        const emailEl = $('dashboard-user-email');
+        const nameEl = $('dashboard-user-name');
+        if (emailEl) emailEl.textContent = state.user.email;
+        
         const displayName = state.userData?.username || state.userData?.nombre || 'Usuario';
-        $('dashboard-user-name').textContent = '@' + displayName;
+        if (nameEl) nameEl.textContent = '@' + displayName;
         updateAvatar('dashboard-avatar', state.userData?.avatar_url, displayName);
 
         await loadGroups();
@@ -218,7 +353,7 @@ function initApp(API) {
             const container = $('groups-list');
 
             if (!grupos || grupos.length === 0) {
-                container.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">No hay grupos aún</p></div>`;
+                if (container) container.innerHTML = `<div class="text-center py-8"><p class="text-slate-500">No hay grupos aún</p></div>`;
                 return;
             }
 
@@ -276,7 +411,7 @@ function initApp(API) {
                 `;
             }
 
-            container.innerHTML = html;
+            if (container) container.innerHTML = html;
 
             // Event listeners
             container.querySelectorAll('.btn-enter').forEach(btn => {
@@ -290,17 +425,21 @@ function initApp(API) {
             });
 
         } catch (error) {
-            $('groups-list').innerHTML = `<p class="text-red-400 text-xs">Error: ${error.message}</p>`;
+            const container = $('groups-list');
+            if (container) container.innerHTML = `<p class="text-red-400 text-xs">Error: ${error.message}</p>`;
         }
     }
 
     async function createGroup() {
-        const name = $('new-group-name').value.trim();
+        const nameInput = $('new-group-name');
+        if (!nameInput) return;
+        
+        const name = nameInput.value.trim();
         if (!name) { alert('Ingresa un nombre'); return; }
         try {
             const grupo = await API.createGrupo(name, state.user.id);
             await API.addMiembro(grupo.id, state.user.id, 'admin');
-            $('new-group-name').value = '';
+            nameInput.value = '';
             await loadGroups();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -334,27 +473,44 @@ function initApp(API) {
         const user = state.userData;
         if (!user) return;
 
-        $('profile-user-name').textContent = user.username || user.nombre || 'Usuario';
-        $('profile-user-email').textContent = user.email || state.user.email;
+        const nameEl = $('profile-user-name');
+        const emailEl = $('profile-user-email');
+        
+        if (nameEl) nameEl.textContent = user.username || user.nombre || 'Usuario';
+        if (emailEl) emailEl.textContent = user.email || state.user.email;
         updateAvatar('profile-avatar', user.avatar_url, user.nombre || user.username);
 
-        $('profile-username').value = user.username || '';
-        $('profile-nombre').value = user.nombre || '';
-        $('profile-apellido').value = user.apellido || '';
-        $('profile-edad').value = user.edad || '';
-        $('profile-sexo').value = user.sexo || '';
-        $('profile-bio').value = user.bio || '';
+        const usernameInput = $('profile-username');
+        const nombreInput = $('profile-nombre');
+        const apellidoInput = $('profile-apellido');
+        const edadInput = $('profile-edad');
+        const sexoInput = $('profile-sexo');
+        const bioInput = $('profile-bio');
+        
+        if (usernameInput) usernameInput.value = user.username || '';
+        if (nombreInput) nombreInput.value = user.nombre || '';
+        if (apellidoInput) apellidoInput.value = user.apellido || '';
+        if (edadInput) edadInput.value = user.edad || '';
+        if (sexoInput) sexoInput.value = user.sexo || '';
+        if (bioInput) bioInput.value = user.bio || '';
     }
 
     async function updateProfile() {
         try {
+            const usernameInput = $('profile-username');
+            const nombreInput = $('profile-nombre');
+            const apellidoInput = $('profile-apellido');
+            const edadInput = $('profile-edad');
+            const sexoInput = $('profile-sexo');
+            const bioInput = $('profile-bio');
+            
             const updates = {
-                username: $('profile-username').value.trim(),
-                nombre: $('profile-nombre').value.trim(),
-                apellido: $('profile-apellido').value.trim(),
-                edad: parseInt($('profile-edad').value),
-                sexo: $('profile-sexo').value,
-                bio: $('profile-bio').value.trim()
+                username: usernameInput ? usernameInput.value.trim() : '',
+                nombre: nombreInput ? nombreInput.value.trim() : '',
+                apellido: apellidoInput ? apellidoInput.value.trim() : '',
+                edad: edadInput ? parseInt(edadInput.value) : 0,
+                sexo: sexoInput ? sexoInput.value : '',
+                bio: bioInput ? bioInput.value.trim() : ''
             };
 
             if (updates.edad < 1 || updates.edad > 120) { alert('Edad no válida'); return; }
@@ -374,14 +530,16 @@ function initApp(API) {
     async function showMembers() {
         if (!state.group) return;
         showScreen('members');
-        $('members-title').textContent = `Miembros de: ${state.group.name}`;
+        const titleEl = $('members-title');
+        if (titleEl) titleEl.textContent = `Miembros de: ${state.group.name}`;
         await loadMembers();
     }
 
     async function loadMembers() {
         try {
             if (!state.group || !state.group.id) {
-                $('members-list').innerHTML = '<p class="text-slate-500 text-sm py-4 text-center">No hay grupo seleccionado</p>';
+                const container = $('members-list');
+                if (container) container.innerHTML = '<p class="text-slate-500 text-sm py-4 text-center">No hay grupo seleccionado</p>';
                 return;
             }
 
@@ -389,53 +547,59 @@ function initApp(API) {
             const container = $('members-list');
 
             if (!miembros || miembros.length === 0) {
-                container.innerHTML = `<p class="text-slate-500 text-sm py-4 text-center">No hay miembros</p>`;
+                if (container) container.innerHTML = `<p class="text-slate-500 text-sm py-4 text-center">No hay miembros</p>`;
                 return;
             }
 
             const creatorId = state.group.creator || state.group.creado_por;
 
-            container.innerHTML = miembros.map(m => {
-                const isCreator = m.usuario_id === creatorId;
-                const isCurrent = m.usuario_id === state.user.id;
-                const user = m.usuario || {};
-                const name = user.username || user.nombre || user.email || 'Usuario';
+            if (container) {
+                container.innerHTML = miembros.map(m => {
+                    const isCreator = m.usuario_id === creatorId;
+                    const isCurrent = m.usuario_id === state.user.id;
+                    const user = m.usuario || {};
+                    const name = user.username || user.nombre || user.email || 'Usuario';
 
-                return `
-                    <div class="member-item">
-                        <div class="member-info">
-                            <div class="avatar avatar-sm">${name.charAt(0).toUpperCase()}</div>
-                            <div>
-                                <span class="text-sm font-medium">${escapeHtml(name)}</span>
-                                ${isCreator ? '<span class="badge badge-amber ml-2">Creador</span>' : ''}
-                                ${isCurrent ? '<span class="badge badge-green ml-2">Tú</span>' : ''}
+                    return `
+                        <div class="member-item">
+                            <div class="member-info">
+                                <div class="avatar avatar-sm">${name.charAt(0).toUpperCase()}</div>
+                                <div>
+                                    <span class="text-sm font-medium">${escapeHtml(name)}</span>
+                                    ${isCreator ? '<span class="badge badge-amber ml-2">Creador</span>' : ''}
+                                    ${isCurrent ? '<span class="badge badge-green ml-2">Tú</span>' : ''}
+                                </div>
                             </div>
+                            ${!isCreator && !isCurrent && state.group.creator === state.user.id ? `
+                                <button class="btn-remove-member btn-danger" data-id="${m.usuario_id}">Eliminar</button>
+                            ` : ''}
                         </div>
-                        ${!isCreator && !isCurrent && state.group.creator === state.user.id ? `
-                            <button class="btn-remove-member btn-danger" data-id="${m.usuario_id}">Eliminar</button>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
 
-            container.querySelectorAll('.btn-remove-member').forEach(btn => {
-                btn.addEventListener('click', () => removeMember(btn.dataset.id));
-            });
+                container.querySelectorAll('.btn-remove-member').forEach(btn => {
+                    btn.addEventListener('click', () => removeMember(btn.dataset.id));
+                });
+            }
 
         } catch (error) {
-            $('members-list').innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            const container = $('members-list');
+            if (container) container.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
         }
     }
 
     async function inviteMember() {
-        const email = $('invite-email').value.trim();
+        const emailInput = $('invite-email');
+        if (!emailInput) return;
+        
+        const email = emailInput.value.trim();
         if (!email) { alert('Ingresa un correo'); return; }
         try {
             const user = await API.getUsuarioByEmail(email);
             if (!user) { alert('Usuario no registrado'); return; }
             if (await API.isMiembro(state.group.id, user.id)) { alert('Ya es miembro'); return; }
             await API.addMiembro(state.group.id, user.id, 'miembro');
-            $('invite-email').value = '';
+            emailInput.value = '';
             await loadMembers();
             alert('✅ Invitado exitosamente');
         } catch (error) {
@@ -465,12 +629,18 @@ function initApp(API) {
         state.isFacilitator = (grupo.creado_por === state.user.id);
         state.sessionId = null;
 
-        $('room-title').textContent = name;
+        const titleEl = $('room-title');
+        if (titleEl) titleEl.textContent = name;
         showScreen('room');
 
-        $('facilitator-panel').classList.toggle('hidden', !state.isFacilitator);
-        $('task-name').value = '';
-        $('current-task').textContent = '—';
+        const facilitatorPanel = $('facilitator-panel');
+        if (facilitatorPanel) facilitatorPanel.classList.toggle('hidden', !state.isFacilitator);
+        
+        const taskInput = $('task-name');
+        const currentTask = $('current-task');
+        
+        if (taskInput) taskInput.value = '';
+        if (currentTask) currentTask.textContent = '—';
 
         await loadActiveSession(id);
         subscribeToRoom(id);
@@ -482,12 +652,15 @@ function initApp(API) {
             if (sesion) {
                 state.sessionId = sesion.id;
                 state.votesRevealed = sesion.estado === 'revelado';
-                $('current-task').textContent = sesion.nombre_tarea;
+                const currentTask = $('current-task');
+                if (currentTask) currentTask.textContent = sesion.nombre_tarea;
                 await loadTeamStatus();
             } else {
                 state.sessionId = null;
-                $('current-task').textContent = '—';
-                $('team-status').innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando votación...</p>';
+                const currentTask = $('current-task');
+                if (currentTask) currentTask.textContent = '—';
+                const teamStatus = $('team-status');
+                if (teamStatus) teamStatus.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando votación...</p>';
             }
         } catch (error) {
             console.error(error);
@@ -495,7 +668,10 @@ function initApp(API) {
     }
 
     async function launchVoting() {
-        const taskName = $('task-name').value.trim();
+        const taskInput = $('task-name');
+        if (!taskInput) return;
+        
+        const taskName = taskInput.value.trim();
         if (!taskName) { alert('Escribe el nombre de la tarea'); return; }
         try {
             await API.supabase
@@ -507,8 +683,10 @@ function initApp(API) {
             const sesion = await API.createSesion(state.group.id, taskName);
             state.sessionId = sesion.id;
             state.votesRevealed = false;
-            $('current-task').textContent = taskName;
-            $('task-name').value = '';
+            
+            const currentTask = $('current-task');
+            if (currentTask) currentTask.textContent = taskName;
+            taskInput.value = '';
             await loadTeamStatus();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -541,7 +719,8 @@ function initApp(API) {
 
     async function loadTeamStatus() {
         if (!state.sessionId) {
-            $('team-status').innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Sin votación activa</p>';
+            const teamStatus = $('team-status');
+            if (teamStatus) teamStatus.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Sin votación activa</p>';
             return;
         }
 
@@ -559,7 +738,8 @@ function initApp(API) {
             });
 
             if (participants.size === 0) {
-                $('team-status').innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando participantes...</p>';
+                const teamStatus = $('team-status');
+                if (teamStatus) teamStatus.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Esperando participantes...</p>';
                 return;
             }
 
@@ -581,7 +761,9 @@ function initApp(API) {
                     </div>
                 `;
             }
-            $('team-status').innerHTML = html;
+            
+            const teamStatus = $('team-status');
+            if (teamStatus) teamStatus.innerHTML = html;
 
         } catch (error) {
             console.error(error);
@@ -626,76 +808,152 @@ function initApp(API) {
     // ============================================
 
     // --- Auth ---
-    $('btn-login').addEventListener('click', () => {
-        handleLogin($('auth-email').value, $('auth-password').value);
-    });
+    const btnLogin = $('btn-login');
+    if (btnLogin) {
+        btnLogin.addEventListener('click', () => {
+            const email = $('auth-email');
+            const password = $('auth-password');
+            if (email && password) {
+                handleLogin(email.value, password.value);
+            }
+        });
+    }
 
-    $('btn-show-register').addEventListener('click', () => toggleForms(true));
-    $('btn-back-login').addEventListener('click', () => toggleForms(false));
+    const btnShowRegister = $('btn-show-register');
+    if (btnShowRegister) {
+        btnShowRegister.addEventListener('click', () => toggleForms(true));
+    }
 
-    $('btn-register').addEventListener('click', () => {
-        const selected = document.querySelector('input[name="gender"]:checked');
-        if (!selected) {
-            $('reg-gender-error').classList.remove('hidden');
-            return;
-        }
-        $('reg-gender-error').classList.add('hidden');
+    const btnBackLogin = $('btn-back-login');
+    if (btnBackLogin) {
+        btnBackLogin.addEventListener('click', () => toggleForms(false));
+    }
 
-        handleRegister(
-            $('reg-email').value,
-            $('reg-password').value,
-            $('reg-nombre').value,
-            $('reg-apellido').value,
-            $('reg-username').value,
-            parseInt($('reg-edad').value),
-            selected.value
-        );
-    });
+    const btnRegister = $('btn-register');
+    if (btnRegister) {
+        btnRegister.addEventListener('click', () => {
+            const selected = document.querySelector('input[name="gender"]:checked');
+            if (!selected) {
+                const genderError = $('reg-gender-error');
+                if (genderError) genderError.classList.remove('hidden');
+                return;
+            }
+            const genderError = $('reg-gender-error');
+            if (genderError) genderError.classList.add('hidden');
+
+            const email = $('reg-email');
+            const password = $('reg-password');
+            const nombre = $('reg-nombre');
+            const apellido = $('reg-apellido');
+            const username = $('reg-username');
+            const edad = $('reg-edad');
+            
+            if (email && password && nombre && apellido && username && edad) {
+                handleRegister(
+                    email.value,
+                    password.value,
+                    nombre.value,
+                    apellido.value,
+                    username.value,
+                    parseInt(edad.value),
+                    selected.value
+                );
+            }
+        });
+    }
 
     // Enter key
-    $('auth-email').addEventListener('keypress', e => {
-        if (e.key === 'Enter') handleLogin($('auth-email').value, $('auth-password').value);
-    });
-    $('auth-password').addEventListener('keypress', e => {
-        if (e.key === 'Enter') handleLogin($('auth-email').value, $('auth-password').value);
-    });
+    const authEmail = $('auth-email');
+    if (authEmail) {
+        authEmail.addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                const email = $('auth-email');
+                const password = $('auth-password');
+                if (email && password) {
+                    handleLogin(email.value, password.value);
+                }
+            }
+        });
+    }
+
+    const authPassword = $('auth-password');
+    if (authPassword) {
+        authPassword.addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                const email = $('auth-email');
+                const password = $('auth-password');
+                if (email && password) {
+                    handleLogin(email.value, password.value);
+                }
+            }
+        });
+    }
 
     // Gender selector
     $$('.gender-option').forEach(el => {
         el.addEventListener('click', function() {
             $$('.gender-option').forEach(o => o.classList.remove('selected'));
             this.classList.add('selected');
-            this.querySelector('input').checked = true;
+            const input = this.querySelector('input');
+            if (input) input.checked = true;
         });
     });
 
     // --- Dashboard ---
-    $('btn-logout').addEventListener('click', handleLogout);
-    $('btn-profile').addEventListener('click', showProfile);
-    $('btn-create-group').addEventListener('click', createGroup);
-    $('new-group-name').addEventListener('keypress', e => {
-        if (e.key === 'Enter') createGroup();
-    });
+    const btnLogout = $('btn-logout');
+    if (btnLogout) btnLogout.addEventListener('click', handleLogout);
+    
+    const btnProfile = $('btn-profile');
+    if (btnProfile) btnProfile.addEventListener('click', showProfile);
+    
+    const btnCreateGroup = $('btn-create-group');
+    if (btnCreateGroup) btnCreateGroup.addEventListener('click', createGroup);
+    
+    const newGroupName = $('new-group-name');
+    if (newGroupName) {
+        newGroupName.addEventListener('keypress', e => {
+            if (e.key === 'Enter') createGroup();
+        });
+    }
 
     // --- Profile ---
-    $('btn-back-profile').addEventListener('click', showDashboard);
-    $('btn-update-profile').addEventListener('click', updateProfile);
+    const btnBackProfile = $('btn-back-profile');
+    if (btnBackProfile) btnBackProfile.addEventListener('click', showDashboard);
+    
+    const btnUpdateProfile = $('btn-update-profile');
+    if (btnUpdateProfile) btnUpdateProfile.addEventListener('click', updateProfile);
 
     // --- Members ---
-    $('btn-back-members').addEventListener('click', () => showScreen('room'));
-    $('btn-invite').addEventListener('click', inviteMember);
-    $('invite-email').addEventListener('keypress', e => {
-        if (e.key === 'Enter') inviteMember();
-    });
+    const btnBackMembers = $('btn-back-members');
+    if (btnBackMembers) btnBackMembers.addEventListener('click', () => showScreen('room'));
+    
+    const btnInvite = $('btn-invite');
+    if (btnInvite) btnInvite.addEventListener('click', inviteMember);
+    
+    const inviteEmail = $('invite-email');
+    if (inviteEmail) {
+        inviteEmail.addEventListener('keypress', e => {
+            if (e.key === 'Enter') inviteMember();
+        });
+    }
 
     // --- Room ---
-    $('btn-back-room').addEventListener('click', () => {
-        cleanupChannels();
-        showDashboard();
-    });
-    $('btn-members').addEventListener('click', showMembers);
-    $('btn-launch').addEventListener('click', launchVoting);
-    $('btn-reveal').addEventListener('click', revealVotes);
+    const btnBackRoom = $('btn-back-room');
+    if (btnBackRoom) {
+        btnBackRoom.addEventListener('click', () => {
+            cleanupChannels();
+            showDashboard();
+        });
+    }
+    
+    const btnMembers = $('btn-members');
+    if (btnMembers) btnMembers.addEventListener('click', showMembers);
+    
+    const btnLaunch = $('btn-launch');
+    if (btnLaunch) btnLaunch.addEventListener('click', launchVoting);
+    
+    const btnReveal = $('btn-reveal');
+    if (btnReveal) btnReveal.addEventListener('click', revealVotes);
 
     $$('.tshirt-btn').forEach(btn => {
         btn.addEventListener('click', () => castVote(btn.dataset.size));
