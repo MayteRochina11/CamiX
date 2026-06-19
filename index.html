@@ -952,7 +952,6 @@
         revealSesion,
         getVotos,
         upsertVoto,
-        supabase
     };
 
     console.log('✅ API cargada correctamente');
@@ -1594,7 +1593,7 @@
         if (e.key === 'Enter') inviteMember();
     });
 
-    
+
     // --- Room ---
     $('btn-back-room').addEventListener('click', () => {
         cleanupChannels();
