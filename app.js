@@ -2,13 +2,19 @@
 // APLICACIÓN PRINCIPAL - CamiX
 // ============================================
 
-// Esperar a que el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Iniciando CamiX...');
+// Función para esperar a que SupabaseAPI esté disponible
+function waitForSupabaseAPI(callback, attempts = 0) {
+    const maxAttempts = 20;
+    const delay = 200;
     
-    // Verificar que SupabaseAPI esté disponible
-    if (typeof window.SupabaseAPI === 'undefined') {
-        console.error('❌ SupabaseAPI no está disponible');
+    if (typeof window.SupabaseAPI !== 'undefined') {
+        console.log('✅ SupabaseAPI encontrado');
+        callback(window.SupabaseAPI);
+        return;
+    }
+    
+    if (attempts >= maxAttempts) {
+        console.error('❌ No se pudo cargar SupabaseAPI después de', maxAttempts, 'intentos');
         document.querySelector('.card-premium').innerHTML = `
             <div class="text-center py-8">
                 <h2 class="text-red-400 text-xl font-bold">Error de carga</h2>
@@ -20,8 +26,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    console.log('✅ API cargada, iniciando aplicación...');
-    initApp(window.SupabaseAPI);
+    console.log(`⏳ Esperando SupabaseAPI... (intento ${attempts + 1}/${maxAttempts})`);
+    setTimeout(() => waitForSupabaseAPI(callback, attempts + 1), delay);
+}
+
+// Esperar a que el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Iniciando CamiX...');
+    
+    // Esperar a que SupabaseAPI esté disponible
+    waitForSupabaseAPI(function(API) {
+        console.log('✅ API cargada, iniciando aplicación...');
+        initApp(API);
+    });
 });
 
 // ============================================
@@ -131,7 +148,7 @@ function initApp(API) {
                 return;
             }
 
-            // ✅ CORREGIDO: Enviar TODOS los datos al registro
+            // Enviar TODOS los datos al registro
             const data = await API.signUp(email, password, {
                 nombre: nombre.trim(),
                 apellido: apellido.trim(),
@@ -210,7 +227,7 @@ function initApp(API) {
             const userMap = {};
             if (userIds.length > 0) {
                 const { data: users } = await API.supabase
-                    .from('usuarios')  // ✅ CORREGIDO
+                    .from('usuarios')
                     .select('id, nombre, username')
                     .in('id', userIds);
                 if (users) users.forEach(u => { userMap[u.id] = u; });
@@ -363,7 +380,6 @@ function initApp(API) {
 
     async function loadMembers() {
         try {
-            // ✅ Validación de estado
             if (!state.group || !state.group.id) {
                 $('members-list').innerHTML = '<p class="text-slate-500 text-sm py-4 text-center">No hay grupo seleccionado</p>';
                 return;
@@ -377,16 +393,12 @@ function initApp(API) {
                 return;
             }
 
-            // ✅ Verificar que state.group.creator existe
             const creatorId = state.group.creator || state.group.creado_por;
 
             container.innerHTML = miembros.map(m => {
-                // ✅ Usar creatorId en lugar de state.group.creator directamente
                 const isCreator = m.usuario_id === creatorId;
                 const isCurrent = m.usuario_id === state.user.id;
                 const user = m.usuario || {};
-                
-                // ✅ Mostrar username si existe, sino nombre
                 const name = user.username || user.nombre || user.email || 'Usuario';
 
                 return `
