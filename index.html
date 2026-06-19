@@ -695,7 +695,7 @@
     }
 
     // Inicializar Supabase
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('✅ Supabase cliente inicializado');
 
     // ============================================
@@ -952,7 +952,7 @@
         revealSesion,
         getVotos,
         upsertVoto,
-        supabase: window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        supabase: supabaseClient
     };
 
     console.log('✅ API cargada correctamente');
