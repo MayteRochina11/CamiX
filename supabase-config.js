@@ -5,8 +5,16 @@
 const SUPABASE_URL = 'https://uwxkdkxwonukadjwwuok.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3eGtka3h3b251a2Fkand3dW9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MTY1MTksImV4cCI6MjA5NzM5MjUxOX0.Cnp-mD-nQM1isECFf2r4RvR2Z6m03ynO5moMMb_1gwY';
 
+// Verificar que Supabase está disponible
+if (typeof window.supabase === 'undefined') {
+    console.error('❌ Supabase SDK no está cargado');
+} else {
+    console.log('✅ Supabase SDK cargado');
+}
+
 // Inicializar Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log('✅ Supabase cliente inicializado');
 
 // ============================================
 // FUNCIONES DE AUTENTICACIÓN
@@ -71,7 +79,7 @@ async function updateUsuario(userId, updates) {
 async function getUsuarioByEmail(email) {
     const { data, error } = await supabase
         .from('usuarios')
-        .select('id')
+        .select('id, email, nombre, username')
         .eq('email', email)
         .maybeSingle();
     if (error) throw error;
@@ -104,17 +112,6 @@ async function createGrupo(nombre, creadorId) {
     const { data, error } = await supabase
         .from('grupos')
         .insert([{ nombre: nombre.trim(), creado_por: creadorId }])
-        .select()
-        .single();
-    if (error) throw error;
-    return data;
-}
-
-async function updateGrupo(grupoId, nombre) {
-    const { data, error } = await supabase
-        .from('grupos')
-        .update({ nombre: nombre.trim() })
-        .eq('id', grupoId)
         .select()
         .single();
     if (error) throw error;
@@ -245,27 +242,6 @@ async function upsertVoto(sesionId, usuarioId, nombreUsuario, talla) {
 }
 
 // ============================================
-// FUNCIONES DE STORAGE (Avatar)
-// ============================================
-async function uploadAvatar(userId, file) {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
-    
-    const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
-    
-    if (uploadError) throw uploadError;
-    
-    const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-    
-    return urlData.publicUrl;
-}
-
-// ============================================
 // EXPORTAR PARA USAR EN app.js
 // ============================================
 window.SupabaseAPI = {
@@ -285,7 +261,6 @@ window.SupabaseAPI = {
     getGrupos,
     getGrupoById,
     createGrupo,
-    updateGrupo,
     deleteGrupo,
     
     // Miembros
@@ -304,9 +279,9 @@ window.SupabaseAPI = {
     getVotos,
     upsertVoto,
     
-    // Storage
-    uploadAvatar,
-    
     // Supabase instance
     supabase
 };
+
+console.log('✅ SupabaseAPI exportada correctamente');
+console.log('📦 Funciones disponibles:', Object.keys(window.SupabaseAPI));
