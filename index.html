@@ -169,6 +169,24 @@
             background: #334155;
             border-radius: 3px;
         }
+
+        /* Estilos para el formulario de registro mejorado */
+        .gender-option {
+            background-color: #1e293b;
+            border: 2px solid #334155;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .gender-option:hover {
+            border-color: #34d399;
+        }
+        .gender-option.selected {
+            border-color: #34d399;
+            background-color: #065f46;
+        }
+        .gender-option input {
+            display: none;
+        }
     </style>
 </head>
 <body class="font-sans antialiased">
@@ -186,29 +204,91 @@
                     <p class="text-slate-400 text-sm font-medium mt-2">T-Shirt Sizing para equipos ágiles</p>
                 </div>
                 
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
-                        <input type="email" id="auth-email" placeholder="tu@equipo.com" 
-                               class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                <!-- Formulario de Login -->
+                <div id="login-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                            <input type="email" id="auth-email" placeholder="tu@equipo.com" 
+                                   class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+                            <input type="password" id="auth-password" placeholder="••••••••" 
+                                   class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                        </div>
+                        
+                        <div class="pt-2 flex gap-3">
+                            <button id="btn-login" 
+                                    class="btn-primary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
+                                Entrar
+                            </button>
+                            <button id="btn-show-register" 
+                                    class="btn-secondary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
+                                Registrarse
+                            </button>
+                        </div>
+                        <p id="auth-error" class="text-red-400 text-xs mt-2 min-h-[16px] text-center"></p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
-                        <input type="password" id="auth-password" placeholder="••••••••" 
-                               class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                </div>
+
+                <!-- Formulario de Registro (oculto por defecto) -->
+                <div id="register-form" class="hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                            <input type="email" id="reg-email" placeholder="tu@equipo.com" 
+                                   class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+                            <input type="password" id="reg-password" placeholder="•••••••• (mínimo 6 caracteres)" 
+                                   class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Nombre</label>
+                                <input type="text" id="reg-nombre" placeholder="Nombre" 
+                                       class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Apellido</label>
+                                <input type="text" id="reg-apellido" placeholder="Apellido" 
+                                       class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Edad</label>
+                            <input type="number" id="reg-edad" placeholder="Tu edad" min="1" max="120"
+                                   class="input-premium w-full px-4 py-3 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sexo</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="gender-option rounded-xl p-3 text-center hover:border-emerald-400 transition-all cursor-pointer" data-gender="masculino">
+                                    <input type="radio" name="gender" value="masculino">
+                                    <span class="text-sm font-medium">👨 Masculino</span>
+                                </label>
+                                <label class="gender-option rounded-xl p-3 text-center hover:border-emerald-400 transition-all cursor-pointer" data-gender="femenino">
+                                    <input type="radio" name="gender" value="femenino">
+                                    <span class="text-sm font-medium">👩 Femenino</span>
+                                </label>
+                            </div>
+                            <p id="reg-gender-error" class="text-red-400 text-xs mt-1 hidden">Por favor selecciona tu sexo</p>
+                        </div>
+                        
+                        <div class="pt-2 flex gap-3">
+                            <button id="btn-register" 
+                                    class="btn-primary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
+                                Crear Cuenta
+                            </button>
+                            <button id="btn-back-login" 
+                                    class="btn-secondary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
+                                Volver
+                            </button>
+                        </div>
+                        <p id="reg-error" class="text-red-400 text-xs mt-2 min-h-[16px] text-center"></p>
                     </div>
-                    
-                    <div class="pt-2 flex gap-3">
-                        <button id="btn-login" 
-                                class="btn-primary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
-                            Entrar
-                        </button>
-                        <button id="btn-register" 
-                                class="btn-secondary flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all">
-                            Registrarse
-                        </button>
-                    </div>
-                    <p id="auth-error" class="text-red-400 text-xs mt-2 min-h-[16px] text-center"></p>
                 </div>
             </div>
         </div>
@@ -223,6 +303,7 @@
                             <span class="gradient-brand">👕 CamiX</span>
                         </h2>
                         <p class="text-slate-400 text-xs mt-1" id="dashboard-user-email">usuario@correo.com</p>
+                        <p class="text-slate-500 text-xs" id="dashboard-user-name"></p>
                     </div>
                     <button id="btn-logout" 
                             class="text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors flex items-center gap-1.5 bg-slate-800/50 px-3 py-1.5 rounded-lg hover:bg-slate-800">
@@ -326,20 +407,21 @@
 
     <script type="module">
         // ==================== CONFIGURACIÓN GLOBAL DE SUPABASE ====================
-        const SUPABASE_URL = 'https://uwxkdkxwonukadjwwuok.supabase.co'; // REEMPLAZAR CON TU URL REAL
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3eGtka3h3b251a2Fkand3dW9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MTY1MTksImV4cCI6MjA5NzM5MjUxOX0.Cnp-mD-nQM1isECFf2r4RvR2Z6m03ynO5moMMb_1gwY'; // REEMPLAZAR CON TU KEY REAL
+        const SUPABASE_URL = 'https://uwxkdkxwonukadjwwuok.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3eGtka3h3b251a2Fkand3dW9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MTY1MTksImV4cCI6MjA5NzM5MjUxOX0.Cnp-mD-nQM1isECFf2r4RvR2Z6m03ynO5moMMb_1gwY';
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ==================== ESTADO GLOBAL DE LA APLICACIÓN ====================
         const state = {
-        session: null,
-        currentUser: null,
-        currentGroup: null,
-        currentSessionId: null,
-        isFacilitator: false,
-        votesRevealed: false,
-        realtimeChannels: []
+            session: null,
+            currentUser: null,
+            currentUserData: null,
+            currentGroup: null,
+            currentSessionId: null,
+            isFacilitator: false,
+            votesRevealed: false,
+            realtimeChannels: []
         };
 
         // ==================== ELEMENTOS DEL DOM ====================
@@ -354,11 +436,26 @@
         const authPassword = document.getElementById('auth-password');
         const authError = document.getElementById('auth-error');
         const btnLogin = document.getElementById('btn-login');
+        const btnShowRegister = document.getElementById('btn-show-register');
+        const btnBackLogin = document.getElementById('btn-back-login');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        
+        // Register elements
+        const regEmail = document.getElementById('reg-email');
+        const regPassword = document.getElementById('reg-password');
+        const regNombre = document.getElementById('reg-nombre');
+        const regApellido = document.getElementById('reg-apellido');
+        const regEdad = document.getElementById('reg-edad');
+        const regGenderError = document.getElementById('reg-gender-error');
         const btnRegister = document.getElementById('btn-register');
-        const dashboardUserEmail = document.getElementById('dashboard-user-email');
-        const btnLogout = document.getElementById('btn-logout');
+        const regError = document.getElementById('reg-error');
+        const genderOptions = document.querySelectorAll('.gender-option');
 
         // Dashboard elements
+        const dashboardUserEmail = document.getElementById('dashboard-user-email');
+        const dashboardUserName = document.getElementById('dashboard-user-name');
+        const btnLogout = document.getElementById('btn-logout');
         const newGroupName = document.getElementById('new-group-name');
         const btnCreateGroup = document.getElementById('btn-create-group');
         const groupsList = document.getElementById('groups-list');
@@ -384,6 +481,17 @@
             }
         }
 
+        // ==================== MANEJO DE GÉNERO EN REGISTRO ====================
+        genderOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                genderOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                regGenderError.classList.add('hidden');
+            });
+        });
+
         // ==================== LIMPIEZA DE CANALES EN TIEMPO REAL ====================
         function cleanupChannels() {
             state.realtimeChannels.forEach(channel => {
@@ -393,40 +501,162 @@
         }
 
         // ==================== AUTENTICACIÓN ====================
-        async function handleAuth(email, password, isRegister = false) {
-            try {
+        function toggleForms(showRegister) {
+            if (showRegister) {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
                 authError.textContent = '';
-                let response;
+            } else {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                regError.textContent = '';
+                regGenderError.classList.add('hidden');
+                genderOptions.forEach(opt => opt.classList.remove('selected'));
+            }
+        }
+
+        async function handleRegister(email, password, nombre, apellido, edad, sexo) {
+            try {
+                regError.textContent = '';
                 
-                if (isRegister) {
-                    response = await supabase.auth.signUp({
-                        email: email,
-                        password: password,
-                    });
-                    if (response.error) throw response.error;
-                    if (response.data?.user?.identities?.length === 0) {
-                        throw new Error('Este correo ya está registrado. Por favor inicia sesión.');
-                    }
-                    authError.textContent = 'Registro exitoso. Revisa tu correo para confirmar.';
-                    authError.classList.remove('text-red-400');
-                    authError.classList.add('text-emerald-400');
+                // Validaciones
+                if (!email || !password || !nombre || !apellido || !edad || !sexo) {
+                    regError.textContent = 'Todos los campos son obligatorios';
                     return;
-                } else {
-                    response = await supabase.auth.signInWithPassword({
-                        email: email,
-                        password: password,
-                    });
-                    if (response.error) throw response.error;
                 }
                 
-                state.session = response.data.session;
-                state.currentUser = response.data.user;
+                if (password.length < 6) {
+                    regError.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                    return;
+                }
+                
+                if (edad < 1 || edad > 120) {
+                    regError.textContent = 'Edad no válida';
+                    return;
+                }
+                
+                // Registrar usuario en Auth
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            nombre: `${nombre} ${apellido}`,
+                            edad: edad,
+                            sexo: sexo
+                        }
+                    }
+                });
+                
+                if (authError) throw authError;
+                
+                if (authData?.user?.identities?.length === 0) {
+                    throw new Error('Este correo ya está registrado. Por favor inicia sesión.');
+                }
+                
+                // Esperar a que el trigger cree el usuario en la tabla usuarios
+                // y luego actualizar con datos adicionales
+                setTimeout(async () => {
+                    try {
+                        // Actualizar datos adicionales en la tabla usuarios
+                        const { error: updateError } = await supabase
+                            .from('usuarios')
+                            .update({
+                                nombre: `${nombre} ${apellido}`,
+                                edad: parseInt(edad),
+                                sexo: sexo
+                            })
+                            .eq('id', authData.user.id);
+                        
+                        if (updateError) {
+                            console.error('Error actualizando datos de usuario:', updateError);
+                        }
+                    } catch (err) {
+                        console.error('Error en actualización posterior:', err);
+                    }
+                }, 1000);
+                
+                regError.textContent = '✅ Registro exitoso. Revisa tu correo para confirmar.';
+                regError.classList.remove('text-red-400');
+                regError.classList.add('text-emerald-400');
+                
+                // Limpiar formulario
+                regEmail.value = '';
+                regPassword.value = '';
+                regNombre.value = '';
+                regApellido.value = '';
+                regEdad.value = '';
+                genderOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Volver al login después de 3 segundos
+                setTimeout(() => {
+                    toggleForms(false);
+                    regError.textContent = '';
+                    regError.classList.remove('text-emerald-400');
+                }, 3000);
+                
+            } catch (error) {
+                regError.textContent = error.message || 'Error en el registro';
+                regError.classList.add('text-red-400');
+                regError.classList.remove('text-emerald-400');
+            }
+        }
+
+        async function handleLogin(email, password) {
+            try {
+                authError.textContent = '';
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+                
+                if (error) throw error;
+                
+                state.session = data.session;
+                state.currentUser = data.user;
+                
+                // Obtener datos del usuario desde la tabla usuarios
+                await loadUserData(data.user.id);
+                
                 showDashboard();
                 
             } catch (error) {
                 authError.textContent = error.message || 'Error de autenticación';
                 authError.classList.add('text-red-400');
-                authError.classList.remove('text-emerald-400');
+            }
+        }
+
+        async function loadUserData(userId) {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+                
+                if (!error && data) {
+                    state.currentUserData = data;
+                } else {
+                    // Si no existe en la tabla usuarios, crearlo
+                    const { error: insertError } = await supabase
+                        .from('usuarios')
+                        .insert([{
+                            id: userId,
+                            email: state.currentUser.email,
+                            nombre: state.currentUser.user_metadata?.nombre || state.currentUser.email
+                        }]);
+                    
+                    if (!insertError) {
+                        state.currentUserData = {
+                            id: userId,
+                            email: state.currentUser.email,
+                            nombre: state.currentUser.user_metadata?.nombre || state.currentUser.email
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando datos del usuario:', error);
             }
         }
 
@@ -435,6 +665,7 @@
             await supabase.auth.signOut();
             state.session = null;
             state.currentUser = null;
+            state.currentUserData = null;
             state.currentGroup = null;
             showScreen('auth');
         }
@@ -443,7 +674,18 @@
         async function showDashboard() {
             if (!state.currentUser) return;
             showScreen('dashboard');
+            
+            // Mostrar información del usuario
             dashboardUserEmail.textContent = state.currentUser.email;
+            if (state.currentUserData) {
+                dashboardUserName.textContent = state.currentUserData.nombre || 'Usuario';
+            } else {
+                await loadUserData(state.currentUser.id);
+                if (state.currentUserData) {
+                    dashboardUserName.textContent = state.currentUserData.nombre || 'Usuario';
+                }
+            }
+            
             await loadGroups();
         }
 
@@ -461,21 +703,48 @@
                     return;
                 }
                 
-                // Obtener emails de los creadores
+                // Obtener emails de la tabla usuarios
                 const creatorIds = [...new Set(data.map(g => g.creado_por).filter(Boolean))];
-                const { data: users } = await supabase.auth.admin?.listUsers() || { data: [] };
                 const userMap = {};
-                if (users) {
-                    users.forEach(u => { userMap[u.id] = u.email; });
+                
+                if (creatorIds.length > 0) {
+                    const { data: usersData, error: usersError } = await supabase
+                        .from('usuarios')
+                        .select('id, email, nombre, edad, sexo')
+                        .in('id', creatorIds);
+                    
+                    if (!usersError && usersData) {
+                        usersData.forEach(u => {
+                            userMap[u.id] = {
+                                email: u.email,
+                                nombre: u.nombre || u.email,
+                                edad: u.edad,
+                                sexo: u.sexo
+                            };
+                        });
+                    }
                 }
                 
                 groupsList.innerHTML = data.map(group => {
-                    const creatorEmail = group.creado_por === state.currentUser.id ? 'Tú' : (userMap[group.creado_por] || 'Usuario');
+                    let creatorDisplay;
+                    const creatorInfo = userMap[group.creado_por];
+                    
+                    if (group.creado_por === state.currentUser.id) {
+                        creatorDisplay = '👤 Tú';
+                    } else if (creatorInfo) {
+                        creatorDisplay = creatorInfo.nombre || creatorInfo.email;
+                    } else if (group.creado_por) {
+                        creatorDisplay = `Usuario ${group.creado_por.slice(0, 8)}`;
+                    } else {
+                        creatorDisplay = 'Usuario desconocido';
+                    }
+                    
                     return `
                         <div class="flex justify-between items-center p-3 bg-slate-800/40 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-colors">
                             <div>
                                 <p class="text-sm font-semibold text-slate-200">${escapeHtml(group.nombre)}</p>
-                                <p class="text-xs text-slate-500">Creado por: ${escapeHtml(creatorEmail)}</p>
+                                <p class="text-xs text-slate-500">Creado por: ${escapeHtml(creatorDisplay)}</p>
+                                <p class="text-xs text-slate-600">${new Date(group.creado_en).toLocaleDateString()}</p>
                             </div>
                             <button data-group-id="${group.id}" data-group-name="${escapeHtml(group.nombre)}" data-creator="${group.creado_por || ''}"
                                     class="btn-enter-room bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-all border border-emerald-600/30">
@@ -485,7 +754,6 @@
                     `;
                 }).join('');
                 
-                // Asignar eventos a botones de entrar
                 document.querySelectorAll('.btn-enter-room').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         const groupId = btn.dataset.groupId;
@@ -496,12 +764,17 @@
                 });
                 
             } catch (error) {
+                console.error('Error en loadGroups:', error);
                 groupsList.innerHTML = `<p class="text-red-400 text-xs py-4 text-center">Error: ${error.message}</p>`;
             }
         }
 
         async function createGroup(name) {
-            if (!name.trim()) return;
+            if (!name.trim()) {
+                alert('Por favor ingresa un nombre para el grupo');
+                return;
+            }
+            
             try {
                 const { error } = await supabase
                     .from('grupos')
@@ -529,23 +802,18 @@
             roomTitle.textContent = groupName;
             showScreen('room');
             
-            // Mostrar/ocultar panel de facilitador
             if (state.isFacilitator) {
                 facilitatorPanel.classList.remove('hidden');
             } else {
                 facilitatorPanel.classList.add('hidden');
             }
             
-            // Resetear UI
             taskNameInput.value = '';
             currentTaskName.textContent = '—';
             teamStatusList.innerHTML = '<p class="text-slate-500 text-xs py-3 text-center">Cargando estado...</p>';
             resetTshirtButtons();
             
-            // Cargar sesión activa si existe
             await loadActiveSession(groupId);
-            
-            // Suscribirse a cambios en tiempo real
             subscribeToRoomUpdates(groupId);
         }
 
@@ -560,7 +828,7 @@
                     .limit(1)
                     .single();
                 
-                if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+                if (error && error.code !== 'PGRST116') throw error;
                 
                 if (data) {
                     state.currentSessionId = data.id;
@@ -586,14 +854,12 @@
             if (!state.currentGroup) return;
             
             try {
-                // Finalizar sesiones anteriores
                 await supabase
                     .from('sesiones')
                     .update({ estado: 'revelado' })
                     .eq('grupo_id', state.currentGroup.id)
                     .eq('estado', 'votando');
                 
-                // Crear nueva sesión
                 const { data, error } = await supabase
                     .from('sesiones')
                     .insert([{
@@ -630,15 +896,13 @@
                     .upsert({
                         sesion_id: state.currentSessionId,
                         usuario_id: state.currentUser.id,
-                        nombre_usuario: state.currentUser.email,
+                        nombre_usuario: state.currentUserData?.nombre || state.currentUser.email,
                         talla: size
                     }, { 
                         onConflict: 'sesion_id, usuario_id' 
                     });
                 
                 if (error) throw error;
-                
-                // Actualizar UI local
                 highlightSelectedSize(size);
                 
             } catch (error) {
@@ -656,7 +920,6 @@
                     .eq('id', state.currentSessionId);
                 
                 if (error) throw error;
-                
                 state.votesRevealed = true;
                 await loadTeamStatus();
                 
@@ -672,7 +935,6 @@
             }
             
             try {
-                // Obtener votos de la sesión actual
                 const { data: votes, error } = await supabase
                     .from('votos')
                     .select('*')
@@ -687,17 +949,41 @@
                     });
                 }
                 
-                // Obtener todos los participantes únicos
                 const participants = new Map();
                 if (votes) {
                     votes.forEach(v => {
                         participants.set(v.usuario_id, v.nombre_usuario);
                     });
                 }
+                
+                // Obtener nombres de participantes desde la tabla usuarios
+                const participantIds = Array.from(participants.keys());
+                if (participantIds.length > 0) {
+                    const { data: usersData } = await supabase
+                        .from('usuarios')
+                        .select('id, nombre, email')
+                        .in('id', participantIds);
+                    
+                    if (usersData) {
+                        usersData.forEach(u => {
+                            participants.set(u.id, u.nombre || u.email);
+                        });
+                    }
+                }
+                
                 // Agregar al creador del grupo si no está
                 if (state.currentGroup?.creator && !participants.has(state.currentGroup.creator)) {
-                    const { data: creatorData } = await supabase.auth.admin?.getUserById(state.currentGroup.creator);
-                    participants.set(state.currentGroup.creator, creatorData?.user?.email || 'Facilitador');
+                    const { data: creatorData } = await supabase
+                        .from('usuarios')
+                        .select('nombre, email')
+                        .eq('id', state.currentGroup.creator)
+                        .single();
+                    
+                    if (creatorData) {
+                        participants.set(state.currentGroup.creator, creatorData.nombre || creatorData.email);
+                    } else {
+                        participants.set(state.currentGroup.creator, 'Facilitador');
+                    }
                 }
                 
                 if (participants.size === 0) {
@@ -747,7 +1033,6 @@
         function subscribeToRoomUpdates(groupId) {
             cleanupChannels();
             
-            // Canal para sesiones
             const sessionChannel = supabase
                 .channel(`sesiones-grupo-${groupId}`)
                 .on('postgres_changes', 
@@ -761,7 +1046,6 @@
             
             state.realtimeChannels.push(sessionChannel);
             
-            // Canal para votos (requiere conocer el sessionId actual)
             if (state.currentSessionId) {
                 subscribeToVotesChannel(state.currentSessionId);
             }
@@ -789,13 +1073,42 @@
         }
 
         // ==================== EVENT LISTENERS ====================
-        // Auth
+        // Auth - Login
         btnLogin.addEventListener('click', () => {
-            handleAuth(authEmail.value, authPassword.value, false);
+            handleLogin(authEmail.value, authPassword.value);
         });
+        
+        authEmail.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin(authEmail.value, authPassword.value);
+        });
+        authPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin(authEmail.value, authPassword.value);
+        });
+
+        // Auth - Register toggle
+        btnShowRegister.addEventListener('click', () => toggleForms(true));
+        btnBackLogin.addEventListener('click', () => toggleForms(false));
+
+        // Auth - Register
         btnRegister.addEventListener('click', () => {
-            handleAuth(authEmail.value, authPassword.value, true);
+            const selectedGender = document.querySelector('input[name="gender"]:checked');
+            if (!selectedGender) {
+                regGenderError.classList.remove('hidden');
+                return;
+            }
+            regGenderError.classList.add('hidden');
+            
+            handleRegister(
+                regEmail.value,
+                regPassword.value,
+                regNombre.value,
+                regApellido.value,
+                parseInt(regEdad.value),
+                selectedGender.value
+            );
         });
+
+        // Auth - Logout
         btnLogout.addEventListener('click', signOut);
 
         // Dashboard
@@ -828,6 +1141,7 @@
             if (data?.session) {
                 state.session = data.session;
                 state.currentUser = data.session.user;
+                await loadUserData(data.session.user.id);
                 showDashboard();
             }
         }
@@ -835,7 +1149,7 @@
         // Ejecutar al cargar
         checkInitialSession();
 
-    console.log('👕 CamiX inicializado correctamente con tu estructura de base de datos');
+        console.log('👕 CamiX inicializado correctamente con registro mejorado');
     </script>
 </body>
 </html>
