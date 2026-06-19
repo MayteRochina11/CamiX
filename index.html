@@ -550,11 +550,16 @@
                     </div>
                 </div>
 
-                <div>
-                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">Tus Grupos</h3>
-                    <div id="groups-list" class="space-y-2 max-h-80 overflow-y-auto">
-                        <p class="text-slate-500 text-xs py-4 text-center">Cargando grupos...</p>
-                    </div>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Tus Grupos</h3>
+    
+                    <button id="btn-refresh-grupos" class="btn-secondary text-xs px-2 py-1 flex items-center gap-1">
+                        🔄 Actualizar
+                    </button>
+                </div>
+
+                <div id="groups-list" class="space-y-2 max-h-80 overflow-y-auto">
+                    <p class="text-slate-500 text-xs py-4 text-center">Cargando grupos...</p>
                 </div>
             </div>
         </div>
@@ -844,6 +849,69 @@
             .eq('usuario_id', usuarioId);
         if (error) throw error;
     }
+
+    // 1. Función para guardar una votación en el historial
+async function guardarEnHistorial(grupoId, tituloHistoria, tallaFinal) {
+    try {
+        const { error } = await supabaseClient
+            .from('historias_estimadas')
+            .insert([{ 
+                grupo_id: grupoId, 
+                titulo_historia: tituloHistoria, 
+                talla_final: tallaFinal 
+            }]);
+
+        if (error) throw error;
+        
+        // Volvemos a cargar el historial para que se vea reflejado inmediatamente
+        await cargarHistorial(grupoId);
+    } catch (error) {
+        console.error('Error al guardar en el historial:', error.message);
+        alert('No se pudo guardar en el historial: ' + error.message);
+    }
+}
+
+    // 2. Función para traer el historial de Supabase y pintarlo en la pantalla
+async function cargarHistorial(grupoId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('historias_estimadas')
+            .select('*')
+            .eq('grupo_id', grupoId)
+            .order('creado_al', { ascending: false }); // Las más recientes arriba
+
+        if (error) throw error;
+
+        const contenedorHistorial = document.getElementById('lista-historial');
+        if (!contenedorHistorial) return;
+
+        // Limpiamos el contenedor antes de pintar
+        contenedorHistorial.innerHTML = '';
+
+        if (data.length === 0) {
+            contenedorHistorial.innerHTML = '<p class="text-gray-400 text-sm text-center">Aún no hay historias estimadas en este grupo.</p>';
+            return;
+        }
+
+        // Pintamos cada fila del historial con estilos similares a tu app Camix
+        data.forEach(item => {
+            const fecha = new Date(item.creado_al).toLocaleDateString();
+            contenedorHistorial.innerHTML += `
+                <div class="flex justify-between items-center bg-zinc-800 p-3 rounded-lg border border-zinc-700">
+                    <div>
+                        <p class="text-white font-medium">${item.titulo_historia}</p>
+                        <span class="text-xs text-zinc-400">${fecha}</span>
+                    </div>
+                    <span class="bg-green-600 text-white font-bold px-3 py-1 rounded-full text-sm">
+                        ${item.talla_final}
+                    </span>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error('Error al cargar el historial:', error.message);
+    }
+}
 
     async function isMiembro(grupoId, usuarioId) {
         const { data, error } = await supabaseClient
@@ -1609,7 +1677,27 @@
     });
 
     console.log('✅ Aplicación inicializada correctamente');
+    // Actu botón de refresco de grupos
+    const btnRefresh = document.getElementById('btn-refresh-grupos');
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', async () => {
+            if (typeof cargarGrupos === 'function') {
+                await cargarGrupos();
+            }
+        });
+    }
 
+    // 2. Suscripción en tiempo real (Supabase Realtime)
+    supabaseClient
+        .channel('cambios-miembros')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'miembros' }, async (payload) => {
+            console.log('¡Sincronización en tiempo real activa: Nuevo miembro!', payload);
+            
+            if (typeof cargarGrupos === 'function') {
+                await cargarGrupos(); 
+            }
+    })
+    .subscribe();
     // Mostrar la pantalla de auth
     showScreen('auth');
     </script>
